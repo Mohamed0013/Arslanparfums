@@ -46,5 +46,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('admin')->group(function () {
         Route::get('/admin/orders', [OrderController::class, 'index']);
         Route::patch('/admin/orders/{order}/validate', [OrderController::class, 'markAsValidated']);
+
+        Route::get('/admin/perfumes', [\App\Http\Controllers\Admin\PerfumeController::class, 'index']);
+        Route::post('/admin/perfumes', [\App\Http\Controllers\Admin\PerfumeController::class, 'store']);
+        Route::patch('/admin/perfumes/{perfume}/stock', [\App\Http\Controllers\Admin\PerfumeController::class, 'updateStock']);
+        Route::patch('/admin/perfumes/{perfume}', [\App\Http\Controllers\Admin\PerfumeController::class, 'update']);
+        Route::delete('/admin/perfumes/{perfume}', [\App\Http\Controllers\Admin\PerfumeController::class, 'destroy']);
     });
 });

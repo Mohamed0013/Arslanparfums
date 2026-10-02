@@ -18,6 +18,8 @@ export interface Perfume {
   country_of_origin: string;
   size_options: string[];
   stock_status: string;
+  stock: Record<string, number> | null;
+  persistence: string;
   fragrance_family: string;
   recipe: string;
   top_notes: string[];

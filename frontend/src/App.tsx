@@ -47,7 +47,7 @@ const languageStorageKey = "perfume-language";
 type Language = "fr" | "ar";
 
 // AFTER
-type PurchaseOption = "pack_30ml_x4" | "single_50ml" | "pack_50ml_x3" | "same_30ml_x4" | "same_50ml_x3";
+type PurchaseOption = "pack_30ml_x4" | "single_50ml" | "pack_50ml_x3" | "same_30ml_x4" | "same_50ml_x3" | "single_30ml";
 
 type PackSelectedPerfume = {
   perfume: Perfume;
@@ -69,6 +69,7 @@ type CartItem = {
 
 const purchaseOptionLabels: Record<PurchaseOption, { fr: string; ar: string }> = {
   pack_30ml_x4: { fr: "Pack 30ml x4 — choix libre (149 DH)", ar: "باك 30مل × 4 — اختيار حر (149 درهم)" },
+  single_30ml: { fr: "30ml — 1 bouteille (49 DH)", ar: "30 مل — زجاجة واحدة (49 درهم)" },
   single_50ml: { fr: "50ml — 1 bouteille (79 DH)", ar: "50 مل — زجاجة واحدة (79 درهم)" },
   pack_50ml_x3: { fr: "Pack 50ml x3 — choix libre (179 DH)", ar: "باك 50مل × 3 — اختيار حر (179 درهم)" },
   same_30ml_x4: { fr: "Pack 30ml x4 — meme parfum (149 DH)", ar: "باك 30مل × 4 — نفس العطر (149 درهم)" },
@@ -164,11 +165,25 @@ const perfumeImageBySlug: Record<string, string> = {
   "xerjoff-naxos" : Naxos,
 };
 
+const PHONE_REGEX = /^(0[0-9]{9}|\+212[0-9]{9})$/;
+
+const validatePhone = (phone: string): string | null => {
+  const trimmed = phone.trim();
+  if (trimmed.length === 0) {
+    return null;
+  }
+  if (!PHONE_REGEX.test(trimmed)) {
+    return "Numero de telephone invalide. Format attendu : 0612345678 ou +212612345678";
+  }
+  return null;
+};
+
 const homeFeaturedSlugs = [
   "imagination",
+  "lacoste-blanc",
+  "invictus",
   "y-eau-de-parfum",
   "boss-bottled",
-  "versace-eros",
 ];
 
 type SeasonKey = "all" | "printemps" | "ete" | "automne" | "hiver";
@@ -862,15 +877,26 @@ function StorefrontPage({ mode, cartItems, isCartOpen, setIsCartOpen, hideEmptyC
             <p className="rounded-2xl bg-white p-5 text-sm text-stone-600 shadow dark:bg-stone-900 dark:text-stone-300">{t("Aucun parfum trouve.", "لم يتم العثور على عطور.")}</p>
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
-              {visiblePerfumes.map((perfume) => (
+              {visiblePerfumes.map((perfume) => {
+                const stock = perfume.stock ?? {};
+                const isOutOfStock = (stock['30ml'] ?? 0) <= 0 && (stock['50ml'] ?? 0) <= 0;
+                return (
                 <Link
                   key={perfume.id}
                   to={`/perfume/${perfume.slug}`}
+                  state={{ buyNow: true }}
                   className="group relative block overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-md transition duration-300 hover:-translate-y-1 hover:shadow-xl dark:border-stone-700 dark:bg-stone-900"
                 >
+                  {isOutOfStock && (
+                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-stone-900/40">
+                      <span className="rounded-full bg-stone-900 px-3 py-1 text-xs font-semibold text-white">
+                        {t("Rupture de stock", "غير متوفر")}
+                      </span>
+                    </div>
+                  )}
                   <div className="aspect-[4/3] overflow-hidden bg-stone-200 dark:bg-stone-800">
                     {resolvePerfumeImage(perfume) ? (
-                      <img src={resolvePerfumeImage(perfume) ?? ""} alt={perfume.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                      <img src={resolvePerfumeImage(perfume) ?? ""} alt={perfume.name} className={`h-full w-full object-cover transition duration-500 ${isOutOfStock ? 'grayscale' : 'group-hover:scale-105'}`} />
                     ) : (
                       <div className="flex h-full items-center justify-center text-xs text-stone-500">{t("Pas d'image", "لا توجد صورة")}</div>
                     )}
@@ -884,7 +910,8 @@ function StorefrontPage({ mode, cartItems, isCartOpen, setIsCartOpen, hideEmptyC
                     <p className="text-xs font-semibold text-amber-800"><Currency amount={perfume.price} /></p>
                   </div>
                 </Link>
-              ))}
+                );
+              })}
             </div>
           )}
         </section>
@@ -1111,6 +1138,7 @@ function PackOrderPage({ onAddToCart }: { onAddToCart: (item: CartItem) => void 
   });
   const [submitting, setSubmitting] = useState(false);
   const [orderMessage, setOrderMessage] = useState("");
+  const [phoneError, setPhoneError] = useState<string | null>(null);
   const nameInputRef = useRef<HTMLInputElement | null>(null);
   const navigate = useNavigate();
 
@@ -1429,6 +1457,13 @@ function PackOrderPage({ onAddToCart }: { onAddToCart: (item: CartItem) => void 
                 event.preventDefault();
                 if (!isComplete || !pack) return;
 
+                const phoneError = validatePhone(orderForm.customer_phone);
+                if (phoneError) {
+                  setPhoneError(phoneError);
+                  return;
+                }
+                setPhoneError(null);
+
                 setSubmitting(true);
                 setOrderMessage("");
 
@@ -1471,11 +1506,18 @@ function PackOrderPage({ onAddToCart }: { onAddToCart: (item: CartItem) => void 
                 onChange={(e) => setOrderForm((f) => ({ ...f, customer_address: e.target.value }))}
               />
               <input
-                className="w-full rounded-xl border border-stone-300 p-3 text-sm dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
+                className={`w-full rounded-xl border p-3 text-sm dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100 ${phoneError ? 'border-rose-300 bg-rose-50' : 'border-stone-300'}`}
                 placeholder={t("Numero de telephone", "رقم الهاتف")}
                 value={orderForm.customer_phone}
-                onChange={(e) => setOrderForm((f) => ({ ...f, customer_phone: e.target.value }))}
+                onChange={(e) => {
+                  const error = validatePhone(e.target.value);
+                  setPhoneError(error);
+                  setOrderForm((f) => ({ ...f, customer_phone: e.target.value }));
+                }}
               />
+              {phoneError && (
+                <p className="text-xs text-rose-600 dark:text-rose-400">{phoneError}</p>
+              )}
 
               <button
                 type="submit"
@@ -1631,6 +1673,7 @@ function PerfumeOrderPage({ onAddToCart }: { onAddToCart: (item: CartItem) => vo
     quantity: 1,
     purchase_option: "single_50ml",
   });
+  const [phoneError, setPhoneError] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -1641,6 +1684,16 @@ function PerfumeOrderPage({ onAddToCart }: { onAddToCart: (item: CartItem) => vo
       .catch(() => setPerfume(null))
       .finally(() => setLoading(false));
   }, [slug]);
+
+  useEffect(() => {
+    const state = location.state as { buyNow?: boolean } | null;
+    if (state?.buyNow && perfume) {
+      setTimeout(() => {
+        purchaseSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        nameInputRef.current?.focus();
+      }, 300);
+    }
+  }, [location.state, perfume]);
 
   useEffect(() => {
     void api.get<Perfume[]>("/perfumes")
@@ -1658,6 +1711,7 @@ function PerfumeOrderPage({ onAddToCart }: { onAddToCart: (item: CartItem) => vo
       gender: perfume.gender,
       sizes: perfume.size_options,
       stockStatus: perfume.stock_status,
+      persistence: perfume.persistence,
       fragranceFamily: perfume.fragrance_family,
       longevity: perfume.longevity,
       sillage: perfume.sillage,
@@ -1675,6 +1729,18 @@ function PerfumeOrderPage({ onAddToCart }: { onAddToCart: (item: CartItem) => vo
       isTrending: perfume.is_trending,
       similarSlugs: perfume.similar_slugs,
     };
+  }, [perfume]);
+
+  const isOutOfStock = useMemo(() => {
+    if (!perfume) {
+      return false;
+    }
+
+    const stock = perfume.stock ?? {};
+    const available30 = (stock['30ml'] ?? 0) > 0;
+    const available50 = (stock['50ml'] ?? 0) > 0;
+
+    return !available30 && !available50;
   }, [perfume]);
 
   const preselectedPurchaseOption = useMemo(() => {
@@ -1729,6 +1795,7 @@ function PerfumeOrderPage({ onAddToCart }: { onAddToCart: (item: CartItem) => vo
 
     const prices: Record<PurchaseOption, number> = {
       pack_30ml_x4: 149,
+      single_30ml: 49,
       single_50ml: 79,
       pack_50ml_x3: 179,
       same_30ml_x4: 149,
@@ -1786,7 +1853,6 @@ function PerfumeOrderPage({ onAddToCart }: { onAddToCart: (item: CartItem) => vo
   };
 
   const handleBuyNow = () => {
-    // If a pack option is selected, redirect to the pack page
     if (packIdFromOption) {
       navigate(`/pack/${packIdFromOption}`, {
         state: { preselectedPerfume: perfume },
@@ -1822,6 +1888,13 @@ function PerfumeOrderPage({ onAddToCart }: { onAddToCart: (item: CartItem) => vo
     if (!perfume) {
       return;
     }
+
+    const phoneError = validatePhone(form.customer_phone);
+    if (phoneError) {
+      setPhoneError(phoneError);
+      return;
+    }
+    setPhoneError(null);
 
     setSubmitting(true);
     setMessage("");
@@ -1918,6 +1991,7 @@ function PerfumeOrderPage({ onAddToCart }: { onAddToCart: (item: CartItem) => vo
                 <p><span className="font-semibold">{t("Stock:", "المخزون:")}</span> {localizePerfumeText(productMeta.stockStatus, isArabic)}</p>
                 <p><span className="font-semibold">{t("Famille olfactive:", "العائلة العطرية:")}</span> {localizePerfumeText(productMeta.fragranceFamily, isArabic)}</p>
                 <p><span className="font-semibold">{t("Tailles disponibles:", "خيارات الحجم:")}</span> {productMeta.sizes.join(", ")}</p>
+                <p><span className="font-semibold">{t("Persistance:", "الثبات:")}</span> {localizePerfumeText(productMeta.persistence, isArabic)}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-3">
@@ -2026,16 +2100,24 @@ function PerfumeOrderPage({ onAddToCart }: { onAddToCart: (item: CartItem) => vo
             <p className="text-xs uppercase tracking-[0.3em] text-stone-500 dark:text-stone-300">{t("Achat", "الشراء")}</p>
             <h2 className="mt-3 text-xl font-semibold text-stone-900 dark:text-stone-100 sm:text-2xl">{t("Commander ce parfum", "اشترِ هذا العطر")}</h2>
 
+            {isOutOfStock && (
+              <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-900 dark:border-rose-700 dark:bg-rose-950/30 dark:text-rose-200">
+                {t("Ce parfum est actuellement en rupture de stock.", "هذا العطر غير متوفر حالياً.")}
+              </div>
+            )}
+
             <div className="mt-4 grid gap-2">
               <p className="text-sm font-medium text-stone-700 dark:text-stone-200">{t("Choisir une option", "اختر العرض")}</p>
               <div className="flex flex-wrap gap-2">
                 {(Object.keys(purchaseOptionLabels) as PurchaseOption[]).map((option) => {
                   const isPack = option === "pack_30ml_x4" || option === "pack_50ml_x3";
                   const packId = option === "pack_30ml_x4" ? "pack-30ml-quad" : option === "pack_50ml_x3" ? "pack-50ml-trio" : null;
+                  const disabled = isOutOfStock;
                   return (
                     <button
                       key={option}
                       type="button"
+                      disabled={disabled}
                       onClick={() => {
                         if (isPack && perfume) {
                           navigate(`/pack/${packId}`, {
@@ -2045,7 +2127,7 @@ function PerfumeOrderPage({ onAddToCart }: { onAddToCart: (item: CartItem) => vo
                         }
                         setForm((current) => ({ ...current, purchase_option: option }));
                       }}
-                      className={`rounded-full px-3 py-2 text-sm font-medium sm:px-4 ${form.purchase_option === option ? "bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900" : "border border-stone-300 text-stone-700 dark:border-stone-600 dark:text-stone-200"}`}
+                      className={`rounded-full px-3 py-2 text-sm font-medium sm:px-4 ${disabled ? 'opacity-50' : form.purchase_option === option ? "bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900" : "border border-stone-300 text-stone-700 dark:border-stone-600 dark:text-stone-200"}`}
                     >
                       {t(purchaseOptionLabels[option].fr, purchaseOptionLabels[option].ar)}
                     </button>
@@ -2068,14 +2150,16 @@ function PerfumeOrderPage({ onAddToCart }: { onAddToCart: (item: CartItem) => vo
               <button
                 type="button"
                 onClick={handleAddToCart}
-                className="rounded-xl border border-stone-900 p-3 text-sm font-medium text-stone-900 hover:bg-stone-100 dark:border-stone-300 dark:text-stone-100 dark:hover:bg-stone-800"
+                disabled={isOutOfStock}
+                className={`rounded-xl border border-stone-900 p-3 text-sm font-medium text-stone-900 hover:bg-stone-100 dark:border-stone-300 dark:text-stone-100 dark:hover:bg-stone-800 ${isOutOfStock ? 'opacity-50' : ''}`}
               >
                 {t("Ajouter au panier", "أضف إلى السلة")}
               </button>
               <button
                 type="button"
                 onClick={handleBuyNow}
-                className="rounded-xl bg-stone-900 p-3 text-sm font-medium text-white hover:bg-stone-700 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-300"
+                disabled={isOutOfStock}
+                className={`rounded-xl bg-stone-900 p-3 text-sm font-medium text-white hover:bg-stone-700 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-300 ${isOutOfStock ? 'opacity-50' : ''}`}
               >
                 {t("Acheter maintenant", "اشترِ الآن")}
               </button>
@@ -2104,11 +2188,18 @@ function PerfumeOrderPage({ onAddToCart }: { onAddToCart: (item: CartItem) => vo
                 onChange={(event) => setForm((current) => ({ ...current, customer_address: event.target.value }))}
               />
               <input
-                className="w-full rounded-xl border border-stone-300 p-3.5 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
+                className={`w-full rounded-xl border p-3.5 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100 ${phoneError ? 'border-rose-300 bg-rose-50' : 'border-stone-300'}`}
                 placeholder={t("Numero de telephone", "رقم الهاتف")}
                 value={form.customer_phone}
-                onChange={(event) => setForm((current) => ({ ...current, customer_phone: event.target.value }))}
+                onChange={(event) => {
+                  const error = validatePhone(event.target.value);
+                  setPhoneError(error);
+                  setForm((current) => ({ ...current, customer_phone: event.target.value }));
+                }}
               />
+              {phoneError && (
+                <p className="text-xs text-rose-600 dark:text-rose-400">{phoneError}</p>
+              )}
               <input
                 className="w-full rounded-xl border border-stone-300 p-3.5 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100"
                 type="number"
@@ -2234,10 +2325,12 @@ function Legend() {
 
 function AdminDashboard({ user, onLogout }: { user: User; onLogout: () => Promise<void> }) {
   const [orders, setOrders] = useState<AdminOrder[]>([]);
+  const [perfumes, setPerfumes] = useState<Perfume[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null);
   const [updatingOrderId, setUpdatingOrderId] = useState<number | null>(null);
   const [message, setMessage] = useState("");
+  const [perfumeMessage, setPerfumeMessage] = useState("");
 
   const fetchOrders = async (showLoading = false) => {
     if (showLoading) {
@@ -2256,6 +2349,16 @@ function AdminDashboard({ user, onLogout }: { user: User; onLogout: () => Promis
     }
   };
 
+  const fetchPerfumes = async () => {
+    setPerfumeMessage("");
+    try {
+      const response = await api.get<Perfume[]>("/admin/perfumes");
+      setPerfumes(response.data);
+    } catch {
+      setPerfumeMessage("Echec de chargement des parfums.");
+    }
+  };
+
   useEffect(() => {
     void fetchOrders(true);
 
@@ -2266,6 +2369,10 @@ function AdminDashboard({ user, onLogout }: { user: User; onLogout: () => Promis
     return () => {
       window.clearInterval(interval);
     };
+  }, []);
+
+  useEffect(() => {
+    void fetchPerfumes();
   }, []);
 
   const pendingOrders = orders.filter((order) => order.status !== "validated");
@@ -2370,6 +2477,20 @@ function AdminDashboard({ user, onLogout }: { user: User; onLogout: () => Promis
               <p className="mt-2 text-3xl font-semibold text-stone-900 dark:text-stone-100">{ordersToday}</p>
               <p className="mt-1 text-sm text-stone-600 dark:text-stone-300">{validationRate.toFixed(1)}% validees</p>
             </article>
+          </section>
+
+          <section id="perfumes" className="rounded-3xl border border-stone-200 bg-white p-7 shadow-xl dark:border-stone-700 dark:bg-stone-900">
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <h2 className="text-2xl font-semibold text-stone-900">Gestion des parfums</h2>
+              <button
+                onClick={() => void fetchPerfumes()}
+                className="rounded-full border border-amber-700 px-3 py-1 text-xs font-semibold text-amber-800 hover:bg-amber-50 dark:border-amber-300 dark:text-amber-200 dark:hover:bg-amber-950/40"
+              >
+                Actualiser
+              </button>
+            </div>
+            {perfumeMessage && <p className="mb-4 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-900">{perfumeMessage}</p>}
+            <PerfumeManager perfumes={perfumes} onUpdate={setPerfumeMessage} />
           </section>
 
           <section id="pending-orders" className="rounded-3xl border border-stone-200 bg-white p-7 shadow-xl dark:border-stone-700 dark:bg-stone-900">
@@ -2676,6 +2797,127 @@ function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </LanguageContext.Provider>
+  );
+}
+
+function PerfumeManager({ perfumes, onUpdate }: { perfumes: Perfume[]; onUpdate: (message: string) => void }) {
+  const { t } = useLanguage();
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [stock30, setStock30] = useState(0);
+  const [stock50, setStock50] = useState(0);
+  const [saving, setSaving] = useState(false);
+
+  const handleEdit = (perfume: Perfume) => {
+    const stock = perfume.stock ?? {};
+    setStock30(stock['30ml'] ?? 0);
+    setStock50(stock['50ml'] ?? 0);
+    setEditingId(perfume.id);
+  };
+
+  const handleSave = async (perfumeId: number) => {
+    setSaving(true);
+    try {
+      await api.patch(`/admin/perfumes/${perfumeId}/stock`, {
+        stock: { '30ml': stock30, '50ml': stock50 },
+      });
+      onUpdate(t("Stock mis a jour.", "تم تحديث المخزون."));
+      setEditingId(null);
+      window.location.reload();
+    } catch {
+      onUpdate(t("Echec de la mise a jour.", "فشل التحديث."));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (perfumes.length === 0) {
+    return <p className="text-sm text-stone-600 dark:text-stone-300">Chargement des parfums...</p>;
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm text-stone-700 dark:text-stone-200">
+        <thead>
+          <tr className="border-b border-stone-200 dark:border-stone-700">
+            <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">Nom</th>
+            <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">Marque</th>
+            <th className="px-3 py-2 text-center text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">30ml</th>
+            <th className="px-3 py-2 text-center text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">50ml</th>
+            <th className="px-3 py-2 text-center text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">Statut</th>
+            <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {perfumes.map((perfume) => {
+            const stock = perfume.stock ?? {};
+            const isEditing = editingId === perfume.id;
+            return (
+              <tr key={perfume.id} className="border-b border-stone-100 dark:border-stone-800">
+                <td className="px-3 py-2">{perfume.name}</td>
+                <td className="px-3 py-2 text-xs text-stone-500 dark:text-stone-400">{perfume.brand}</td>
+                <td className="px-3 py-2 text-center">
+                  {isEditing ? (
+                    <input
+                      type="number"
+                      min={0}
+                      value={stock30}
+                      onChange={(e) => setStock30(Number(e.target.value) || 0)}
+                      className="w-16 rounded-lg border border-stone-300 p-1 text-center text-xs dark:border-stone-600 dark:bg-stone-800"
+                    />
+                  ) : (
+                    <span className={stock['30ml'] === 0 ? 'text-rose-600 font-semibold' : ''}>{stock['30ml'] ?? 0}</span>
+                  )}
+                </td>
+                <td className="px-3 py-2 text-center">
+                  {isEditing ? (
+                    <input
+                      type="number"
+                      min={0}
+                      value={stock50}
+                      onChange={(e) => setStock50(Number(e.target.value) || 0)}
+                      className="w-16 rounded-lg border border-stone-300 p-1 text-center text-xs dark:border-stone-600 dark:bg-stone-800"
+                    />
+                  ) : (
+                    <span className={stock['50ml'] === 0 ? 'text-rose-600 font-semibold' : ''}>{stock['50ml'] ?? 0}</span>
+                  )}
+                </td>
+                <td className="px-3 py-2 text-center">
+                  <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${(stock['30ml'] ?? 0) > 0 || (stock['50ml'] ?? 0) > 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
+                    {(stock['30ml'] ?? 0) > 0 || (stock['50ml'] ?? 0) > 0 ? t('En stock', 'متوفر') : t('Rupture', 'غير متوفر')}
+                  </span>
+                </td>
+                <td className="px-3 py-2 text-right">
+                  {isEditing ? (
+                    <div className="flex justify-end gap-2">
+                      <button
+                        onClick={() => handleSave(perfume.id)}
+                        disabled={saving}
+                        className="rounded-lg bg-stone-900 px-3 py-1 text-xs font-medium text-white hover:bg-stone-700 disabled:opacity-70"
+                      >
+                        {saving ? t('Sauvegarde...', 'جارٍ الحفظ...') : t('Sauver', 'حفظ')}
+                      </button>
+                      <button
+                        onClick={() => setEditingId(null)}
+                        className="rounded-lg border border-stone-300 px-3 py-1 text-xs font-medium text-stone-700 hover:bg-stone-100"
+                      >
+                        {t('Annuler', 'إلغاء')}
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => handleEdit(perfume)}
+                      className="rounded-lg border border-stone-300 px-3 py-1 text-xs font-medium text-stone-700 hover:bg-stone-100"
+                    >
+                      {t('Editer', 'تعديل')}
+                    </button>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
   );
 }
 

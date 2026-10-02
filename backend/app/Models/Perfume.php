@@ -22,6 +22,7 @@ class Perfume extends Model
         'country_of_origin',
         'size_options',
         'stock_status',
+        'stock',
         'fragrance_family',
         'recipe',
         'top_notes',
@@ -29,6 +30,7 @@ class Perfume extends Model
         'base_notes',
         'longevity',
         'sillage',
+        'persistence',
         'vibe',
         'when_to_wear',
         'feeling',
@@ -55,6 +57,7 @@ class Perfume extends Model
         return [
             'price' => 'decimal:2',
             'size_options' => 'array',
+            'stock' => 'array',
             'top_notes' => 'array',
             'heart_notes' => 'array',
             'base_notes' => 'array',

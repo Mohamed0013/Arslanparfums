@@ -5,16 +5,23 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\Perfume;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
     private const PURCHASE_OPTION_PRICING = [
-        'pack_30ml_x2' => ['type' => 'fixed', 'value' => 69.0],
-        'pack_30ml_x4' => ['type' => 'fixed', 'value' => 149.0],
-        'single_50ml' => ['type' => 'fixed', 'value' => 79.0],
-        'pack_50ml_x3' => ['type' => 'fixed', 'value' => 179.0],
-        'pack_20ml_x5' => ['type' => 'fixed', 'value' => 139.0],
+        'pack_30ml_x4' => ['type' => 'fixed', 'value' => 149.0, 'size' => '30ml', 'quantity' => 4],
+        'single_50ml' => ['type' => 'fixed', 'value' => 79.0, 'size' => '50ml', 'quantity' => 1],
+        'pack_50ml_x3' => ['type' => 'fixed', 'value' => 179.0, 'size' => '50ml', 'quantity' => 3],
+        'same_30ml_x4' => ['type' => 'fixed', 'value' => 149.0, 'size' => '30ml', 'quantity' => 4],
+        'same_50ml_x3' => ['type' => 'fixed', 'value' => 179.0, 'size' => '50ml', 'quantity' => 3],
+        'single_30ml' => ['type' => 'fixed', 'value' => 49.0, 'size' => '30ml', 'quantity' => 1],
     ];
+
+    private function getPurchaseOptionMeta(string $purchaseOption): array
+    {
+        return self::PURCHASE_OPTION_PRICING[$purchaseOption] ?? ['type' => 'fixed', 'value' => 79.0, 'size' => '50ml', 'quantity' => 1];
+    }
 
     public function index(Request $request)
     {
@@ -37,9 +44,9 @@ class OrderController extends Controller
             'perfume_id' => 'required|integer|exists:perfumes,id',
             'customer_name' => 'required|string|max:255',
             'customer_address' => 'required|string|max:500',
-            'customer_phone' => 'required|string|max:30',
+            'customer_phone' => ['required', 'string', 'max:30', 'regex:/^(0[0-9]{9}|\+212[0-9]{9})$/'],
             'quantity' => 'required|integer|min:1|max:100',
-            'purchase_option' => 'required|string|in:pack_30ml_x2,pack_30ml_x4,single_50ml,pack_50ml_x3,pack_20ml_x5',
+            'purchase_option' => 'required|string|in:pack_30ml_x4,single_50ml,pack_50ml_x3,same_30ml_x4,same_50ml_x3,single_30ml',
         ]);
 
         $perfume = Perfume::findOrFail($data['perfume_id']);
@@ -50,18 +57,43 @@ class OrderController extends Controller
             ], 422);
         }
 
-        $unitPrice = $this->resolveUnitPrice((float) $perfume->price, $data['purchase_option']);
+        $optionMeta = $this->getPurchaseOptionMeta($data['purchase_option']);
+        $size = $optionMeta['size'];
+        $optionQuantity = $optionMeta['quantity'];
+        $requiredStock = (int) $data['quantity'] * $optionQuantity;
 
-        $order = Order::create([
-            'perfume_id' => $perfume->id,
-            'customer_name' => $data['customer_name'],
-            'customer_address' => $data['customer_address'],
-            'customer_phone' => $data['customer_phone'],
-            'purchase_option' => $data['purchase_option'],
-            'quantity' => $data['quantity'],
-            'total_price' => round($unitPrice * $data['quantity'], 2),
-            'status' => 'pending',
-        ]);
+        try {
+            $order = DB::transaction(function () use ($perfume, $data, $optionMeta, $size, $optionQuantity, $requiredStock) {
+                $lockedPerfume = Perfume::lockForUpdate()->findOrFail($perfume->id);
+                $currentStock = (int) ($lockedPerfume->stock[$size] ?? 0);
+
+                if ($currentStock < $requiredStock) {
+                    throw new \Exception("Insufficient stock for {$size}. Only {$currentStock} available.", 422);
+                }
+
+                $unitPrice = (float) $optionMeta['value'];
+
+                $order = Order::create([
+                    'perfume_id' => $lockedPerfume->id,
+                    'customer_name' => $data['customer_name'],
+                    'customer_address' => $data['customer_address'],
+                    'customer_phone' => $data['customer_phone'],
+                    'purchase_option' => $data['purchase_option'],
+                    'quantity' => $data['quantity'],
+                    'total_price' => round($unitPrice * $data['quantity'], 2),
+                    'status' => 'pending',
+                ]);
+
+                $lockedPerfume->stock = array_merge($lockedPerfume->stock ?? [], [$size => $currentStock - $requiredStock]);
+                $lockedPerfume->save();
+
+                return $order;
+            });
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], $e->getCode() ?: 422);
+        }
 
         return response()->json([
             'message' => 'Your order has been placed successfully.',
