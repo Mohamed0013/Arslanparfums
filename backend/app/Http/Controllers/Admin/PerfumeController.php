@@ -22,18 +22,16 @@ class PerfumeController extends Controller
     {
         $data = $request->validate([
             'stock' => 'required|array',
-            'stock.30ml' => 'nullable|integer|min:0',
             'stock.50ml' => 'nullable|integer|min:0',
         ]);
 
         $stock = [
-            '30ml' => (int) ($data['stock']['30ml'] ?? 0),
             '50ml' => (int) ($data['stock']['50ml'] ?? 0),
         ];
 
         $perfume->stock = $stock;
-        $perfume->size_options = ['30ml', '50ml'];
-        $perfume->stock_status = ($stock['30ml'] > 0 || $stock['50ml'] > 0) ? 'In stock' : 'Out of stock';
+        $perfume->size_options = ['50ml'];
+        $perfume->stock_status = $stock['50ml'] > 0 ? 'En stock || متوفر' : 'Rupture de stock || غير متوفر';
         $perfume->save();
 
         return response()->json([
@@ -55,9 +53,8 @@ class PerfumeController extends Controller
             'image_url' => 'nullable|string|max:500',
             'country_of_origin' => 'nullable|string|max:255',
             'size_options' => 'required|array|min:1',
-            'size_options.*' => 'string|in:30ml,50ml',
+            'size_options.*' => 'string|in:50ml',
             'stock' => 'required|array',
-            'stock.30ml' => 'nullable|integer|min:0',
             'stock.50ml' => 'nullable|integer|min:0',
             'stock_status' => 'required|string|max:255',
             'fragrance_family' => 'nullable|string|max:255',
@@ -109,9 +106,8 @@ class PerfumeController extends Controller
             'image_url' => 'nullable|string|max:500',
             'country_of_origin' => 'nullable|string|max:255',
             'size_options' => 'required|array|min:1',
-            'size_options.*' => 'string|in:30ml,50ml',
+            'size_options.*' => 'string|in:50ml',
             'stock' => 'required|array',
-            'stock.30ml' => 'nullable|integer|min:0',
             'stock.50ml' => 'nullable|integer|min:0',
             'stock_status' => 'required|string|max:255',
             'fragrance_family' => 'nullable|string|max:255',
