@@ -2323,14 +2323,67 @@ function Legend() {
   );
 }
 
+function OrderPagination({
+  page,
+  pageCount,
+  onPageChange,
+}: {
+  page: number;
+  pageCount: number;
+  onPageChange: (page: number) => void;
+}) {
+  if (pageCount <= 1) {
+    return null;
+  }
+
+  return (
+    <nav className="flex flex-wrap items-center justify-center gap-1.5" aria-label="Pagination des commandes">
+      <button
+        type="button"
+        disabled={page === 1}
+        onClick={() => onPageChange(page - 1)}
+        className="rounded-lg border border-stone-300 px-3 py-1.5 text-xs font-semibold text-stone-700 hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-stone-600 dark:text-stone-200 dark:hover:bg-stone-800"
+      >
+        Precedent
+      </button>
+      {Array.from({ length: pageCount }, (_, index) => index + 1).map((pageNumber) => (
+        <button
+          key={pageNumber}
+          type="button"
+          onClick={() => onPageChange(pageNumber)}
+          aria-current={pageNumber === page ? "page" : undefined}
+          className={`h-8 min-w-8 rounded-lg px-2 text-xs font-semibold ${
+            pageNumber === page
+              ? "bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900"
+              : "border border-stone-300 text-stone-700 hover:bg-stone-100 dark:border-stone-600 dark:text-stone-200 dark:hover:bg-stone-800"
+          }`}
+        >
+          {pageNumber}
+        </button>
+      ))}
+      <button
+        type="button"
+        disabled={page === pageCount}
+        onClick={() => onPageChange(page + 1)}
+        className="rounded-lg border border-stone-300 px-3 py-1.5 text-xs font-semibold text-stone-700 hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-stone-600 dark:text-stone-200 dark:hover:bg-stone-800"
+      >
+        Suivant
+      </button>
+    </nav>
+  );
+}
+
 function AdminDashboard({ user, onLogout }: { user: User; onLogout: () => Promise<void> }) {
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [perfumes, setPerfumes] = useState<Perfume[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null);
   const [updatingOrderId, setUpdatingOrderId] = useState<number | null>(null);
+  const [validatedPage, setValidatedPage] = useState(1);
+  const [refusedPage, setRefusedPage] = useState(1);
   const [message, setMessage] = useState("");
   const [perfumeMessage, setPerfumeMessage] = useState("");
+  const ordersPerPage = 8;
 
   const fetchOrders = async (showLoading = false) => {
     if (showLoading) {
@@ -2375,14 +2428,33 @@ function AdminDashboard({ user, onLogout }: { user: User; onLogout: () => Promis
     void fetchPerfumes();
   }, []);
 
-  const pendingOrders = orders.filter((order) => order.status !== "validated");
+  const pendingOrders = orders.filter((order) => order.status !== "validated" && order.status !== "refused");
   const validatedOrders = orders.filter((order) => order.status === "validated");
+  const refusedOrders = orders.filter((order) => order.status === "refused");
+  const validatedPageCount = Math.max(1, Math.ceil(validatedOrders.length / ordersPerPage));
+  const refusedPageCount = Math.max(1, Math.ceil(refusedOrders.length / ordersPerPage));
+  const visibleValidatedOrders = validatedOrders.slice(
+    (validatedPage - 1) * ordersPerPage,
+    validatedPage * ordersPerPage,
+  );
+  const visibleRefusedOrders = refusedOrders.slice(
+    (refusedPage - 1) * ordersPerPage,
+    refusedPage * ordersPerPage,
+  );
   const totalRevenue = validatedOrders.reduce((sum, order) => sum + order.total_price, 0);
   const averageOrderValue = orders.length === 0 ? 0 : orders.reduce((sum, order) => sum + order.total_price, 0) / orders.length;
   const validationRate = orders.length === 0 ? 0 : (validatedOrders.length / orders.length) * 100;
   const today = new Date().toDateString();
   const ordersToday = orders.filter((order) => order.created_at && new Date(order.created_at).toDateString() === today).length;
   const latestOrders = orders.slice(0, 5);
+
+  useEffect(() => {
+    setValidatedPage((current) => Math.min(current, validatedPageCount));
+  }, [validatedPageCount]);
+
+  useEffect(() => {
+    setRefusedPage((current) => Math.min(current, refusedPageCount));
+  }, [refusedPageCount]);
 
   const formatOrderDate = (createdAt?: string | null) => {
     if (!createdAt) {
@@ -2402,6 +2474,21 @@ function AdminDashboard({ user, onLogout }: { user: User; onLogout: () => Promis
       setMessage(response.data.message);
     } catch {
       setMessage("Echec de validation de la commande.");
+    } finally {
+      setUpdatingOrderId(null);
+    }
+  };
+
+  const markAsRefused = async (orderId: number) => {
+    setUpdatingOrderId(orderId);
+    setMessage("");
+
+    try {
+      const response = await api.patch<{ message: string; order: AdminOrder }>(`/admin/orders/${orderId}/refuse`);
+      setOrders((current) => current.map((order) => (order.id === orderId ? response.data.order : order)));
+      setMessage(response.data.message);
+    } catch {
+      setMessage("Echec de refus de la commande.");
     } finally {
       setUpdatingOrderId(null);
     }
@@ -2529,6 +2616,13 @@ function AdminDashboard({ user, onLogout }: { user: User; onLogout: () => Promis
                         >
                           {updatingOrderId === order.id ? "Validation..." : "Valider"}
                         </button>
+                        <button
+                          onClick={() => void markAsRefused(order.id)}
+                          disabled={updatingOrderId === order.id}
+                          className="rounded-full bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-800 disabled:opacity-70"
+                        >
+                          {updatingOrderId === order.id ? "Refus..." : "Refuser"}
+                        </button>
                       </div>
                     </div>
 
@@ -2561,22 +2655,79 @@ function AdminDashboard({ user, onLogout }: { user: User; onLogout: () => Promis
             ) : validatedOrders.length === 0 ? (
               <p className="text-stone-600 dark:text-stone-300">Aucune commande validee.</p>
             ) : (
-              <div className="space-y-3">
-                {validatedOrders.map((order) => (
-                  <article key={order.id} className="rounded-2xl border border-emerald-200 bg-emerald-50/40 p-4">
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                      <div>
-                        <p className="text-sm text-emerald-800">Commande #{order.id} • {formatOrderDate(order.created_at)}</p>
-                        <p className="text-lg font-semibold text-stone-900 dark:text-stone-100">{order.perfume ?? "Parfum"}</p>
-                        <p className="text-sm text-stone-700 dark:text-stone-200">{order.customer_name} • Qte {order.quantity} • {order.purchase_option}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-semibold text-emerald-800">Validee</p>
-                        <p className="text-sm text-stone-700 dark:text-stone-200"><Currency amount={order.total_price} /></p>
-                      </div>
-                    </div>
-                  </article>
-                ))}
+              <div className="space-y-4">
+                <div className="overflow-x-auto rounded-2xl border border-emerald-200">
+                  <table className="w-full min-w-[720px] text-left text-sm">
+                    <thead className="bg-emerald-100/70 text-xs uppercase tracking-wide text-emerald-900">
+                      <tr>
+                        <th className="px-4 py-3">Commande</th>
+                        <th className="px-4 py-3">Client</th>
+                        <th className="px-4 py-3">Parfum</th>
+                        <th className="px-4 py-3">Offre</th>
+                        <th className="px-4 py-3">Total</th>
+                        <th className="px-4 py-3">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-emerald-100 bg-white dark:bg-stone-900">
+                      {visibleValidatedOrders.map((order) => (
+                        <tr key={order.id} className="text-stone-700 dark:text-stone-200">
+                          <td className="px-4 py-3 font-semibold">#{order.id}</td>
+                          <td className="px-4 py-3">{order.customer_name}<br /><span className="text-xs text-stone-500">Qte {order.quantity}</span></td>
+                          <td className="px-4 py-3">{order.perfume ?? "Parfum"}</td>
+                          <td className="px-4 py-3">{order.purchase_option}</td>
+                          <td className="px-4 py-3 font-semibold"><Currency amount={order.total_price} /></td>
+                          <td className="px-4 py-3 text-xs">{formatOrderDate(order.created_at)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <OrderPagination page={validatedPage} pageCount={validatedPageCount} onPageChange={setValidatedPage} />
+              </div>
+            )}
+          </section>
+
+          <section id="refused-orders" className="rounded-3xl border border-stone-200 bg-white p-7 shadow-xl dark:border-stone-700 dark:bg-stone-900">
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <h2 className="text-2xl font-semibold text-stone-900">Commandes refusees</h2>
+              <p className="rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-900">
+                {refusedOrders.length} refusees
+              </p>
+            </div>
+
+            {loading ? (
+              <p className="text-stone-600 dark:text-stone-300">Chargement des commandes...</p>
+            ) : refusedOrders.length === 0 ? (
+              <p className="text-stone-600 dark:text-stone-300">Aucune commande refusee.</p>
+            ) : (
+              <div className="space-y-4">
+                <div className="overflow-x-auto rounded-2xl border border-red-200">
+                  <table className="w-full min-w-[720px] text-left text-sm">
+                    <thead className="bg-red-100/70 text-xs uppercase tracking-wide text-red-900">
+                      <tr>
+                        <th className="px-4 py-3">Commande</th>
+                        <th className="px-4 py-3">Client</th>
+                        <th className="px-4 py-3">Parfum</th>
+                        <th className="px-4 py-3">Offre</th>
+                        <th className="px-4 py-3">Total</th>
+                        <th className="px-4 py-3">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-red-100 bg-white dark:bg-stone-900">
+                      {visibleRefusedOrders.map((order) => (
+                        <tr key={order.id} className="text-stone-700 dark:text-stone-200">
+                          <td className="px-4 py-3 font-semibold">#{order.id}</td>
+                          <td className="px-4 py-3">{order.customer_name}<br /><span className="text-xs text-stone-500">Qte {order.quantity}</span></td>
+                          <td className="px-4 py-3">{order.perfume ?? "Parfum"}</td>
+                          <td className="px-4 py-3">{order.purchase_option}</td>
+                          <td className="px-4 py-3 font-semibold"><Currency amount={order.total_price} /></td>
+                          <td className="px-4 py-3 text-xs">{formatOrderDate(order.created_at)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <OrderPagination page={refusedPage} pageCount={refusedPageCount} onPageChange={setRefusedPage} />
               </div>
             )}
           </section>

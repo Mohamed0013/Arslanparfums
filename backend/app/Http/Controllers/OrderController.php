@@ -143,6 +143,57 @@ class OrderController extends Controller
         ]);
     }
 
+    public function markAsRefused(Request $request, Order $order)
+    {
+        if ($request->user()?->role !== 'admin') {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        if ($order->status === 'refused') {
+            return response()->json([
+                'message' => 'Order already refused.',
+                'order' => $this->serializeOrder($order->loadMissing('perfume')),
+            ]);
+        }
+
+        if ($order->status === 'validated') {
+            return response()->json([
+                'message' => 'Cannot refuse a validated order.',
+            ], 422);
+        }
+
+        try {
+            DB::transaction(function () use ($order) {
+                $optionMeta = $this->getPurchaseOptionMeta($order->purchase_option);
+                $size = $optionMeta['size'];
+                $optionQuantity = $optionMeta['quantity'];
+                $restockQuantity = (int) $order->quantity * $optionQuantity;
+
+                $perfume = Perfume::query()->whereKey($order->perfume_id)->lockForUpdate()->first();
+                if ($perfume) {
+                    $currentStock = (int) ($perfume->stock[$size] ?? 0);
+                    $perfume->stock = array_merge($perfume->stock ?? [], [$size => $currentStock + $restockQuantity]);
+                    $perfume->stock_status = ($currentStock + $restockQuantity) > 0
+                        ? 'En stock || متوفر'
+                        : 'Rupture de stock || غير متوفر';
+                    $perfume->save();
+                }
+
+                $order->status = 'refused';
+                $order->save();
+            });
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+
+        return response()->json([
+            'message' => 'Order refused successfully.',
+            'order' => $this->serializeOrder($order->loadMissing('perfume')),
+        ]);
+    }
+
     private function serializeOrder(Order $order): array
     {
         return [
