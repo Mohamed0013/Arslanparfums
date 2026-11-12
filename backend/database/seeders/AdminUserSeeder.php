@@ -10,11 +10,20 @@ class AdminUserSeeder extends Seeder
 {
     public function run(): void
     {
+        $email = trim((string) env('ADMIN_EMAIL'));
+        $password = (string) env('ADMIN_PASSWORD');
+
+        if ($email === '' || $password === '') {
+            throw new \RuntimeException(
+                'ADMIN_EMAIL and ADMIN_PASSWORD must be configured before running the admin seeder.'
+            );
+        }
+
         $admin = User::updateOrCreate(
-            ['email' => 'mohdahma13@gmail.com'],
+            ['email' => $email],
             [
                 'name' => 'Admin User',
-                'password' => Hash::make('Simoox029@##'),
+                'password' => Hash::make($password),
                 'role' => 'admin',
             ]
         );

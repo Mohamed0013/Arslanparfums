@@ -1,6 +1,11 @@
 # Root dependencies
 /node_modules/
 
+# Environment files and local secrets
+**/.env
+**/.env.*
+!**/.env.example
+
 # Common logs
 *.log
 npm-debug.log*

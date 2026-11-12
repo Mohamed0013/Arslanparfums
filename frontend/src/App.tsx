@@ -1711,9 +1711,9 @@ function PerfumeOrderPage({ onAddToCart }: { onAddToCart: (item: CartItem) => vo
     const fallbackImage = resolvePerfumeImage(perfume);
 
     return [
-      { label: "Flacon", image: perfume.bottle_images[0] ?? fallbackImage, tone: "from-amber-200 to-amber-50" },
-      { label: "Emballage", image: perfume.packaging_images[0] ?? fallbackImage, tone: "from-rose-200 to-rose-50" },
-      { label: "Style de vie", image: perfume.lifestyle_images[0] ?? fallbackImage, tone: "from-stone-300 to-stone-100" },
+      { image: perfume.bottle_images[0] ?? fallbackImage, tone: "from-amber-200 to-amber-50" },
+      { image: perfume.packaging_images[0] ?? fallbackImage, tone: "from-rose-200 to-rose-50" },
+      { image: perfume.lifestyle_images[0] ?? fallbackImage, tone: "from-stone-300 to-stone-100" },
     ];
   }, [perfume]);
 
@@ -1940,19 +1940,18 @@ function PerfumeOrderPage({ onAddToCart }: { onAddToCart: (item: CartItem) => vo
               <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-3">
                 {mediaItems.map((media, index) => (
                   <button
-                    key={media.label}
+                    key={index}
                     type="button"
                     onClick={() => setActiveMediaIndex(index)}
                     className={`overflow-hidden rounded-xl border text-left ${activeMediaIndex === index ? "border-stone-900 dark:border-stone-200" : "border-stone-200 dark:border-stone-700"}`}
                   >
                     <div className={`flex aspect-[4/3] items-center justify-center bg-gradient-to-br ${media.tone}`}>
                       {media.image ? (
-                        <img src={media.image} alt={media.label} className="h-full w-full object-cover" />
+                        <img src={media.image} alt={perfume.name} className="h-full w-full object-cover" />
                       ) : (
-                        <span className="text-xs font-semibold text-stone-700">{media.label}</span>
+                        <span className="text-xs font-semibold text-stone-700">Pas d'image</span>
                       )}
                     </div>
-                    <p className="px-3 py-2 text-xs font-medium text-stone-700 dark:text-stone-200">{media.label}</p>
                   </button>
                 ))}
               </div>
