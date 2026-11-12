@@ -16,6 +16,7 @@ class Order extends Model
         'customer_address',
         'customer_phone',
         'purchase_option',
+        'selected_perfume_ids',
         'quantity',
         'total_price',
         'status',
@@ -26,6 +27,7 @@ class Order extends Model
         return [
             'quantity' => 'integer',
             'total_price' => 'decimal:2',
+            'selected_perfume_ids' => 'array',
         ];
     }
 

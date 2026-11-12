@@ -97,6 +97,7 @@ class OrderController extends Controller
                     'customer_address' => $data['customer_address'],
                     'customer_phone' => $data['customer_phone'],
                     'purchase_option' => $data['purchase_option'],
+                    'selected_perfume_ids' => $selectedPerfumeIds,
                     'quantity' => $data['quantity'],
                     'total_price' => round($unitPrice * $data['quantity'], 2),
                     'status' => 'pending',
@@ -196,6 +197,16 @@ class OrderController extends Controller
 
     private function serializeOrder(Order $order): array
     {
+        $perfumeNames = [];
+        if ($order->selected_perfume_ids && is_array($order->selected_perfume_ids)) {
+            $perfumes = Perfume::whereIn('id', $order->selected_perfume_ids)->get()->keyBy('id');
+            $perfumeNames = $order->selected_perfume_ids
+                ? array_map(fn ($id) => $perfumes[$id]?->name, $order->selected_perfume_ids)
+                : [];
+        } elseif ($order->perfume) {
+            $perfumeNames = [$order->perfume->name];
+        }
+
         return [
             'id' => $order->id,
             'perfume' => $order->perfume?->name,
@@ -208,6 +219,7 @@ class OrderController extends Controller
             'total_price' => (float) $order->total_price,
             'status' => $order->status,
             'created_at' => optional($order->created_at)->toISOString(),
+            'contents' => $perfumeNames,
         ];
     }
 

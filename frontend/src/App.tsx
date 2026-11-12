@@ -2631,6 +2631,7 @@ function AdminDashboard({ user, onLogout }: { user: User; onLogout: () => Promis
                         <p><span className="font-semibold">Adresse:</span> {order.customer_address}</p>
                         <p><span className="font-semibold">Telephone:</span> {order.customer_phone ?? "-"}</p>
                         <p><span className="font-semibold">Offre:</span> {order.purchase_option}</p>
+                        <p><span className="font-semibold">Contenu:</span> {(order.contents ?? [order.perfume]).join(" • ")}</p>
                         <p><span className="font-semibold">Total:</span> <Currency amount={order.total_price} /></p>
                         <p><span className="font-semibold">Cree le:</span> {formatOrderDate(order.created_at)}</p>
                       </div>
