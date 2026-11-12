@@ -8,25 +8,34 @@ class PerfumeController extends Controller
 {
     public function index()
     {
-        $availableSummerSlugs = ['boss-bottled', 'imagination', 'erba-pura', 'invictus', 'dior-sauvage', 'lacoste-blanc'];
-        $outOfStockSummerSlugs = ['bleu-chanel', 'dolce-gabbana-light-blue', 'y-eau-de-parfum'];
+        $inStockOrder = [
+            'xerjoff-naxos',
+            'tom-ford-oud-wood',
+            'bianco-latte',
+            'le-male-elixir',
+            'ombre-leather',
+            'spicebomb',
+            'boss-bottled',
+            'stronger-with-you',
+            'stronger-with-you-intensely',
+            'tom-ford-noir',
+            'le-male-le-parfum',
+            'dior-homme-intense',
+            'gentleman-reserve',
+            'sauvage-elixir-new',
+            'the-most-wanted-new',
+            'layton-new',
+            'l-instant-de-guerlain',
+        ];
 
         $perfumes = Perfume::query()
             ->select('*')
-            ->orderByRaw("
-                CASE slug
-                    WHEN 'boss-bottled' THEN 1
-                    WHEN 'imagination' THEN 2
-                    WHEN 'erba-pura' THEN 3
-                    WHEN 'invictus' THEN 4
-                    WHEN 'dior-sauvage' THEN 5
-                    WHEN 'lacoste-blanc' THEN 6
-                    WHEN 'bleu-chanel' THEN 20
-                    WHEN 'dolce-gabbana-light-blue' THEN 21
-                    WHEN 'y-eau-de-parfum' THEN 22
-                    ELSE 10
-                END ASC
-            ")
+            ->orderByRaw('CASE WHEN stock_status = ? THEN 0 ELSE 1 END', ['En stock || متوفر'])
+            ->orderByRaw(
+                'CASE slug ' . collect($inStockOrder)
+                    ->map(fn (string $slug, int $index) => "WHEN '{$slug}' THEN " . ($index + 1))
+                    ->implode(' ') . ' ELSE 100 END'
+            )
             ->get()
             ->map(fn (Perfume $perfume) => $this->serializePerfume($perfume));
 
@@ -55,9 +64,9 @@ class PerfumeController extends Controller
             'price' => (float) $perfume->price,
             'image_url' => $perfume->image_url,
             'country_of_origin' => $perfume->country_of_origin ?? 'Unknown',
-            'size_options' => $perfume->size_options ?? ['30ml', '50ml'],
+            'size_options' => $perfume->size_options ?? ['50ml'],
             'stock_status' => $perfume->stock_status ?? 'In stock',
-            'stock' => $perfume->stock ?? ['30ml' => 0, '50ml' => 0],
+            'stock' => $perfume->stock ?? ['50ml' => 0],
             'seasons' => $perfume->seasons ?? [],
             'fragrance_family' => $perfume->fragrance_family ?? 'Fresh Aromatic',
             'recipe' => $perfume->recipe ?? 'Classic fragrance composition with layered top, heart, and base notes.',

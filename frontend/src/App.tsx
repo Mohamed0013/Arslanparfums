@@ -10,12 +10,18 @@ import ImaginationImage from "./pictures/Imagination.png";
 import InvictusImage from "./pictures/Invectus.png";
 import LHommeImage from "./pictures/LHOME.png";
 import LightBlueImage from "./pictures/LightBlue.png";
-import PackEliteHarmonyImage from "./pictures/pack3/pack-elite-harmony.png";
-import PackHarmonieImage from "./pictures/pack3/pack-harmonie.png";
+import Pack50mlTrioImage from "./pictures/pack3/pack_50ml_trio.jpg";
+import PackAutomneImage from "./pictures/pack3/pack_automne.jpg";
+import PackBureauImage from "./pictures/pack3/pack_buteau.jpg";
+import PackCadeauImage from "./pictures/pack3/pack_cadeau.jpg";
+import PackHiverImage from "./pictures/pack3/pack_hiver.jpg";
+import PackRomantiqueImage from "./pictures/pack3/pack_romantique.jpg";
+import PackSoireeImage from "./pictures/pack3/pack_soiree.jpg";
 import WantedImage from "./pictures/Wanted.jpeg";
 import YImage from "./pictures/Y.jpeg";
 import SauvageImage from "./pictures/sauvage.jpeg";
 import YouImage from "./pictures/You.png";
+import StrongerWithYouIntenselyImage from "./pictures/stronger_with_you_intensely.jpg";
 import VersaceErosImage from "./pictures/VersaceEros.jpeg";
 import BiancolatteImage from "./pictures/Biancolatte.jpg";
 import ErbapuraImage from "./pictures/Erbapura.jpg";
@@ -27,6 +33,12 @@ import Lemaleelexir from "./pictures/Le_male_elexire.png"
 import LemaleLeparfume from "./pictures/Le_male_parfume.png"
 import Tomford from "./pictures/Tom_ford_noir.png"
 import TomfordOud from "./pictures/TomfordOudWood.png"
+import GentlemanImage from "./pictures/gentleman.jpg";
+import LaytonImage from "./pictures/layton.jpg";
+import OmbreImage from "./pictures/ombre.jpg";
+import SpicebombImage from "./pictures/spicebomb.jpg";
+import SauvageElixirImage from "./pictures/sauvageelixir.jpg";
+import WantedNewImage from "./pictures/mostwanted.jpg";
 
 type AdminLoginForm = {
   email: string;
@@ -47,7 +59,7 @@ const languageStorageKey = "perfume-language";
 type Language = "fr" | "ar";
 
 // AFTER
-type PurchaseOption = "pack_30ml_x4" | "single_50ml" | "pack_50ml_x3" | "same_30ml_x4" | "same_50ml_x3" | "single_30ml";
+type PurchaseOption = "single_50ml" | "pack_50ml_x3";
 
 type PackSelectedPerfume = {
   perfume: Perfume;
@@ -68,12 +80,8 @@ type CartItem = {
 };
 
 const purchaseOptionLabels: Record<PurchaseOption, { fr: string; ar: string }> = {
-  pack_30ml_x4: { fr: "Pack 30ml x4 — choix libre (149 DH)", ar: "باك 30مل × 4 — اختيار حر (149 درهم)" },
-  single_30ml: { fr: "30ml — 1 bouteille (49 DH)", ar: "30 مل — زجاجة واحدة (49 درهم)" },
   single_50ml: { fr: "50ml — 1 bouteille (79 DH)", ar: "50 مل — زجاجة واحدة (79 درهم)" },
-  pack_50ml_x3: { fr: "Pack 50ml x3 — choix libre (179 DH)", ar: "باك 50مل × 3 — اختيار حر (179 درهم)" },
-  same_30ml_x4: { fr: "Pack 30ml x4 — meme parfum (149 DH)", ar: "باك 30مل × 4 — نفس العطر (149 درهم)" },
-  same_50ml_x3: { fr: "Pack 50ml x3 — meme parfum (179 DH)", ar: "باك 50مل × 3 — نفس العطر (179 درهم)" },
+  pack_50ml_x3: { fr: "Pack 50ml x3 — 3 parfums differents (199 DH)", ar: "باك 50مل × 3 — 3 عطور مختلفة (199 درهم)" },
 };
 
 const ingredientArabicMap: Record<string, string> = {
@@ -152,6 +160,7 @@ const perfumeImageBySlug: Record<string, string> = {
   "y-eau-de-parfum": YImage,
   "dior-sauvage": SauvageImage,
   "stronger-with-you": YouImage,
+  "stronger-with-you-intensely": StrongerWithYouIntenselyImage,
   "versace-eros": VersaceErosImage,
   "bianco-latte": BiancolatteImage,
   "erba-pura": ErbapuraImage,
@@ -163,6 +172,12 @@ const perfumeImageBySlug: Record<string, string> = {
   "tom-ford-noir" : Tomford,
   "tom-ford-oud-wood" : TomfordOud,
   "xerjoff-naxos" : Naxos,
+  "gentleman-reserve": GentlemanImage,
+  "layton-new": LaytonImage,
+  "ombre-leather": OmbreImage,
+  "spicebomb": SpicebombImage,
+  "sauvage-elixir-new": SauvageElixirImage,
+  "the-most-wanted-new": WantedNewImage,
 };
 
 const PHONE_REGEX = /^(0[0-9]{9}|\+212[0-9]{9})$/;
@@ -179,10 +194,10 @@ const validatePhone = (phone: string): string | null => {
 };
 
 const homeFeaturedSlugs = [
-  "imagination",
-  "lacoste-blanc",
-  "invictus",
-  "y-eau-de-parfum",
+  "xerjoff-naxos",
+  "tom-ford-oud-wood",
+  "bianco-latte",
+  "le-male-elixir",
   "boss-bottled",
 ];
 
@@ -202,6 +217,7 @@ type PackShowcaseItem = {
   id: string;
   image: string;
   perfumeSlug: string;
+  perfumeSlugs: string[];
   purchaseOption: PurchaseOption;
   selectionCount: number;
   titleFr: string;
@@ -215,178 +231,174 @@ type PackShowcaseItem = {
 
 // AFTER
 const packShowcaseItems: PackShowcaseItem[] = [
-  // ── FORMAT PACKS ──────────────────────────────────────────
-  {
-    id: "pack-30ml-quad",
-    image: PackHarmonieImage,
-    perfumeSlug: "versace-eros",
-    purchaseOption: "pack_30ml_x4",
-    selectionCount: 4,
-    titleFr: "Pack 30ml x4",
-    titleAr: "باك 30مل × 4",
-    descriptionFr: "4 parfums 30ml pour 149 DH. Variez chaque jour.",
-    descriptionAr: "4 عطور 30مل بـ 149 درهم. نوع عطرك يومياً.",
-    detailsFr: "Construisez votre pack de 4 parfums au format 30ml. Parfait pour varier chaque jour de la semaine.",
-    detailsAr: "قم ببناء الباك الخاص بك مكون من 4 عطور بحجم 30مل. مثالي لتنويع الروائح كل يوم في الأسبوع.",
-    price: 149,
-  },
   {
     id: "pack-50ml-trio",
-    image: PackEliteHarmonyImage,
+    image: Pack50mlTrioImage,
     perfumeSlug: "imagination",
+    perfumeSlugs: ["xerjoff-naxos", "boss-bottled", "layton-new"],
     purchaseOption: "pack_50ml_x3",
     selectionCount: 3,
     titleFr: "Pack 50ml Trio",
     titleAr: "باك 50مل ثلاثي",
-    descriptionFr: "3 parfums 50ml pour 179 DH. Le choix complet.",
-    descriptionAr: "3 عطور 50مل بـ 179 درهم. الاختيار المتكامل.",
+    descriptionFr: "3 parfums 50ml differents pour 199 DH.",
+    descriptionAr: "3 عطور مختلفة بحجم 50مل بـ 199 درهم.",
     detailsFr: "Construisez votre pack de 3 parfums 50ml pour un choix complet au quotidien.",
     detailsAr: "قم ببناء الباك الخاص بك مكون من 3 عطور 50مل لاختيارات يومية متكاملة.",
-    price: 179,
+    price: 199,
   },
 
   // ── SEASONAL PACKS ────────────────────────────────────────
   {
     id: "pack-ete",
-    image: PackEliteHarmonyImage,
+    image: Pack50mlTrioImage,
     perfumeSlug: "dolce-gabbana-light-blue",
-    purchaseOption: "pack_30ml_x4",
-    selectionCount: 4,
+    perfumeSlugs: ["tom-ford-noir", "stronger-with-you-intensely", "le-male-elixir"],
+    purchaseOption: "pack_50ml_x3",
+    selectionCount: 3,
     titleFr: "Pack Été ☀️",
     titleAr: "باك الصيف ☀️",
-    descriptionFr: "4 parfums frais et lumineux pour l'été. 149 DH.",
-    descriptionAr: "4 عطور منعشة ومضيئة للصيف. 149 درهم.",
+    descriptionFr: "3 parfums frais et lumineux pour l'été. 199 DH.",
+    descriptionAr: "3 عطور منعشة ومضيئة للصيف. 199 درهم.",
     detailsFr: "Des senteurs aquatiques, citronnées et légères pensées pour les journées chaudes. Légèreté et fraîcheur garanties.",
     detailsAr: "روائح مائية وحمضية وخفيفة مصممة للأيام الحارة. خفة وانتعاش مضمونان.",
-    price: 149,
+    price: 199,
   },
   {
     id: "pack-hiver",
-    image: PackHarmonieImage,
+    image: PackHiverImage,
     perfumeSlug: "tom-ford-noir",
-    purchaseOption: "pack_30ml_x4",
-    selectionCount: 4,
+    perfumeSlugs: ["tom-ford-oud-wood", "ombre-leather", "spicebomb"],
+    purchaseOption: "pack_50ml_x3",
+    selectionCount: 3,
     titleFr: "Pack Hiver ❄️",
     titleAr: "باك الشتاء ❄️",
-    descriptionFr: "4 parfums chauds et enveloppants pour l'hiver. 149 DH.",
-    descriptionAr: "4 عطور دافئة وعميقة للشتاء. 149 درهم.",
+    descriptionFr: "3 parfums chauds et enveloppants pour l'hiver. 199 DH.",
+    descriptionAr: "3 عطور دافئة وعميقة للشتاء. 199 درهم.",
     detailsFr: "Des notes boisées, ambrées et épicées pour vous envelopper pendant les nuits froides. Chaleur et profondeur.",
     detailsAr: "نوتات خشبية وعنبرية وتوابل تلفك خلال الليالي الباردة. دفء وعمق.",
-    price: 149,
+    price: 199,
   },
   {
     id: "pack-printemps",
-    image: PackEliteHarmonyImage,
+    image: Pack50mlTrioImage,
     perfumeSlug: "l-homme-ysl",
-    purchaseOption: "pack_30ml_x4",
-    selectionCount: 4,
+    perfumeSlugs: ["boss-bottled", "dior-homme-intense", "gentleman-reserve"],
+    purchaseOption: "pack_50ml_x3",
+    selectionCount: 3,
     titleFr: "Pack Printemps 🌸",
     titleAr: "باك الربيع 🌸",
-    descriptionFr: "4 parfums floraux et doux pour le printemps. 149 DH.",
-    descriptionAr: "4 عطور زهرية وناعمة للربيع. 149 درهم.",
+    descriptionFr: "3 parfums floraux et doux pour le printemps. 199 DH.",
+    descriptionAr: "3 عطور زهرية وناعمة للربيع. 199 درهم.",
     detailsFr: "Des senteurs fleuries, poudrées et délicates qui accompagnent le renouveau de la nature.",
     detailsAr: "روائح زهرية وناعمة ورقيقة ترافق تجدد الطبيعة.",
-    price: 149,
+    price: 199,
   },
   {
     id: "pack-automne",
-    image: PackHarmonieImage,
+    image: PackAutomneImage,
     perfumeSlug: "xerjoff-naxos",
-    purchaseOption: "pack_30ml_x4",
-    selectionCount: 4,
+    perfumeSlugs: ["xerjoff-naxos", "tom-ford-oud-wood", "bianco-latte"],
+    purchaseOption: "pack_50ml_x3",
+    selectionCount: 3,
     titleFr: "Pack Automne 🍂",
     titleAr: "باك الخريف 🍂",
-    descriptionFr: "4 parfums doux et boisés pour l'automne. 149 DH.",
-    descriptionAr: "4 عطور ناعمة وخشبية للخريف. 149 درهم.",
+    descriptionFr: "3 parfums doux et boisés pour l'automne. 199 DH.",
+    descriptionAr: "3 عطور ناعمة وخشبية للخريف. 199 درهم.",
     detailsFr: "Des notes de bois sec, de cuir et de résine pour accompagner les journées d'automne.",
     detailsAr: "نوتات خشب جاف وجلد وراتنج لمرافقة أيام الخريف.",
-    price: 149,
+    price: 199,
   },
 
   // ── MOOD / OCCASION PACKS ─────────────────────────────────
   {
     id: "pack-soiree",
-    image: PackEliteHarmonyImage,
+    image: PackSoireeImage,
     perfumeSlug: "le-male-elixir",
+    perfumeSlugs: ["le-male-elixir", "stronger-with-you", "sauvage-elixir-new"],
     purchaseOption: "pack_50ml_x3",
     selectionCount: 3,
     titleFr: "Pack Soirée 🌙",
     titleAr: "باك السهرة 🌙",
-    descriptionFr: "3 parfums intenses et séducteurs pour vos soirées. 179 DH.",
-    descriptionAr: "3 عطور قوية وجذابة لسهراتك. 179 درهم.",
+    descriptionFr: "3 parfums intenses et séducteurs pour vos soirées. 199 DH.",
+    descriptionAr: "3 عطور قوية وجذابة لسهراتك. 199 درهم.",
     detailsFr: "Oud, ambre et épices — des fragrances qui marquent les esprits lors de vos soirées et événements.",
     detailsAr: "عود وعنبر وتوابل — عطور تترك أثراً في الذاكرة خلال سهراتك وفعالياتك.",
-    price: 179,
+    price: 199,
   },
   {
     id: "pack-bureau",
-    image: PackHarmonieImage,
+    image: PackBureauImage,
     perfumeSlug: "boss-bottled",
+    perfumeSlugs: ["boss-bottled", "dior-homme-intense", "tom-ford-oud-wood"],
     purchaseOption: "pack_50ml_x3",
     selectionCount: 3,
     titleFr: "Pack Bureau 💼",
     titleAr: "باك المكتب 💼",
-    descriptionFr: "3 parfums discrets et élégants pour le bureau. 179 DH.",
-    descriptionAr: "3 عطور راقية وخفيفة مناسبة للعمل. 179 درهم.",
+    descriptionFr: "3 parfums discrets et élégants pour le bureau. 199 DH.",
+    descriptionAr: "3 عطور راقية وخفيفة مناسبة للعمل. 199 درهم.",
     detailsFr: "Des senteurs propres, boisées et légères qui inspirent confiance et professionnalisme.",
     detailsAr: "روائح نظيفة وخشبية وخفيفة توحي بالثقة والاحترافية.",
-    price: 179,
+    price: 199,
   },
   {
     id: "pack-sport",
-    image: PackEliteHarmonyImage,
+    image: Pack50mlTrioImage,
     perfumeSlug: "invictus",
-    purchaseOption: "pack_30ml_x4",
-    selectionCount: 4,
+    perfumeSlugs: ["xerjoff-naxos", "layton-new", "the-most-wanted-new"],
+    purchaseOption: "pack_50ml_x3",
+    selectionCount: 3,
     titleFr: "Pack Sport ⚡",
     titleAr: "باك الرياضة ⚡",
-    descriptionFr: "4 parfums frais et dynamiques pour le sport. 149 DH.",
-    descriptionAr: "4 عطور منعشة وديناميكية للرياضة. 149 درهم.",
+    descriptionFr: "3 parfums frais et dynamiques pour le sport. 199 DH.",
+    descriptionAr: "3 عطور منعشة وديناميكية للرياضة. 199 درهم.",
     detailsFr: "Des fragrances aquatiques et énergiques pensées pour les sportifs et les esprits actifs.",
     detailsAr: "عطور مائية وحيوية مصممة للرياضيين وأصحاب الروح النشطة.",
-    price: 149,
+    price: 199,
   },
   {
     id: "pack-romantique",
-    image: PackHarmonieImage,
-    perfumeSlug: "erba-pura",
+    image: PackRomantiqueImage,
+    perfumeSlug: "le-male-le-parfum",
+    perfumeSlugs: ["le-male-le-parfum", "gentleman-reserve", "stronger-with-you"],
     purchaseOption: "pack_50ml_x3",
     selectionCount: 3,
     titleFr: "Pack Romantique 🌹",
     titleAr: "باك الرومانسية 🌹",
-    descriptionFr: "3 parfums doux et sensuels pour les moments romantiques. 179 DH.",
-    descriptionAr: "3 عطور ناعمة وحسية للحظات الرومانسية. 179 درهم.",
+    descriptionFr: "3 parfums doux et sensuels pour les moments romantiques. 199 DH.",
+    descriptionAr: "3 عطور ناعمة وحسية للحظات الرومانسية. 199 درهم.",
     detailsFr: "Des notes florales, musquées et vanillées pour des moments intimes inoubliables.",
     detailsAr: "نوتات زهرية ومسكية وفانيلية للحظات حميمة لا تُنسى.",
-    price: 179,
+    price: 199,
   },
   {
     id: "pack-voyage",
-    image: PackEliteHarmonyImage,
+    image: Pack50mlTrioImage,
     perfumeSlug: "imagination",
-    purchaseOption: "pack_30ml_x4",
-    selectionCount: 4,
+    perfumeSlugs: ["bianco-latte", "ombre-leather", "tom-ford-noir"],
+    purchaseOption: "pack_50ml_x3",
+    selectionCount: 3,
     titleFr: "Pack Voyage ✈️",
     titleAr: "باك السفر ✈️",
-    descriptionFr: "4 parfums 30ml compacts, parfaits pour voyager. 149 DH.",
-    descriptionAr: "4 عطور 30مل مدمجة، مثالية للسفر. 149 درهم.",
-    detailsFr: "Le format 30ml passe partout en cabine. Emportez 4 humeurs différentes dans votre valise.",
-    detailsAr: "حجم 30مل مقبول في المقصورة. خذ معك 4 مزاجات مختلفة في حقيبتك.",
-    price: 149,
+    descriptionFr: "3 parfums 50ml parfaits pour voyager. 199 DH.",
+    descriptionAr: "3 عطور 50مل مثالية للسفر. 199 درهم.",
+    detailsFr: "Choisissez trois parfums differents pour accompagner chaque moment de votre voyage.",
+    detailsAr: "اختر ثلاثة عطور مختلفة لمرافقة كل لحظة من رحلتك.",
+    price: 199,
   },
   {
     id: "pack-cadeau",
-    image: PackHarmonieImage,
-    perfumeSlug: "versace-eros",
+    image: PackCadeauImage,
+    perfumeSlug: "gentleman-reserve",
+    perfumeSlugs: ["gentleman-reserve", "layton-new", "sauvage-elixir-new"],
     purchaseOption: "pack_50ml_x3",
     selectionCount: 3,
     titleFr: "Pack Cadeau 🎁",
     titleAr: "باك الهدية 🎁",
-    descriptionFr: "3 parfums premium pour offrir en cadeau. 179 DH.",
-    descriptionAr: "3 عطور فاخرة مثالية كهدية. 179 درهم.",
+    descriptionFr: "3 parfums premium differents pour offrir en cadeau. 199 DH.",
+    descriptionAr: "3 عطور فاخرة مختلفة مثالية كهدية. 199 درهم.",
     detailsFr: "Une sélection soignée de 3 parfums d'exception pour offrir à quelqu'un de spécial.",
     detailsAr: "تشكيلة مختارة بعناية من 3 عطور استثنائية لتهديها لشخص مميز.",
-    price: 179,
+    price: 199,
   },
 ];
 
@@ -580,8 +592,7 @@ function StorefrontPage({ mode, cartItems, isCartOpen, setIsCartOpen, hideEmptyC
   const offerTickerMessages = useMemo(() => {
     const defaults = [
       t("50ml a 79 DH", "50 مل بـ 79 درهم"),
-      t("Pack 30ml x4 a 149 DH", "باك 30مل × 4 بـ 149 درهم"),
-      t("Pack 50ml x3 a 179 DH", "باك 50مل × 3 بـ 179 درهم"),
+      t("Pack 50ml x3 a 199 DH", "باك 50مل × 3 بـ 199 درهم"),
       t("Livraison gratuite partout au Maroc", "توصيل مجاني في كل المغرب"),
     ];
 
@@ -879,7 +890,7 @@ function StorefrontPage({ mode, cartItems, isCartOpen, setIsCartOpen, hideEmptyC
             <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
               {visiblePerfumes.map((perfume) => {
                 const stock = perfume.stock ?? {};
-                const isOutOfStock = (stock['30ml'] ?? 0) <= 0 && (stock['50ml'] ?? 0) <= 0;
+                const isOutOfStock = (stock['50ml'] ?? 0) <= 0;
                 return (
                 <Link
                   key={perfume.id}
@@ -929,7 +940,9 @@ function StorefrontPage({ mode, cartItems, isCartOpen, setIsCartOpen, hideEmptyC
               {t("Choisissez un pack pret a commander avec des prix fixes et avantageux.", "اختر باكا جاهزا للطلب بأسعار ثابتة ومميزة.")}
             </p>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {packShowcaseItems.map((pack) => (
+              {packShowcaseItems
+                .filter((pack) => !["pack-ete", "pack-printemps", "pack-sport", "pack-voyage"].includes(pack.id))
+                .map((pack) => (
                 <Link
                   key={pack.id}
                   to={`/pack/${pack.id}`}
@@ -941,11 +954,9 @@ function StorefrontPage({ mode, cartItems, isCartOpen, setIsCartOpen, hideEmptyC
                   <div className="space-y-2 p-3">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] ${
-                        pack.purchaseOption === "pack_30ml_x4"
-                          ? "bg-amber-100 text-amber-800"
-                          : "bg-stone-100 text-stone-700"
+                        "bg-stone-100 text-stone-700"
                       }`}>
-                        {pack.purchaseOption === "pack_30ml_x4" ? "30ml x4" : "50ml x3"}
+                        50ml x3
                       </span>
                       <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-semibold text-emerald-800">
                         {t("Personnalisable", "قابل للتخصيص")}
@@ -956,7 +967,7 @@ function StorefrontPage({ mode, cartItems, isCartOpen, setIsCartOpen, hideEmptyC
                     <p className="text-xs font-semibold text-amber-800"><Currency amount={pack.price} /></p>
                   </div>
                 </Link>
-              ))}
+                ))}
             </div>
           </section>
         )}
@@ -989,6 +1000,10 @@ function PerfumeSelectorModal({
   const availablePerfumes = useMemo(() => {
     const normalizedSearch = modalSearch.trim().toLowerCase();
     return catalog.filter((perfume) => {
+      const stock = perfume.stock ?? {};
+      if ((stock["50ml"] ?? 0) <= 0) {
+        return false;
+      }
       if (normalizedSearch.length > 0) {
         const searchable = [perfume.name, perfume.brand, perfume.fragrance_family].join(" ").toLowerCase();
         if (!searchable.includes(normalizedSearch)) return false;
@@ -1079,7 +1094,6 @@ function PerfumeSelectorModal({
                     disabled={alreadySelected}
                     onClick={() => {
                       onSelect(perfume);
-                      onClose();
                     }}
                     className={`group overflow-hidden rounded-2xl border text-left transition ${
                       alreadySelected
@@ -1120,17 +1134,15 @@ function PerfumeSelectorModal({
   );
 }
 
+void PerfumeSelectorModal;
+
 function PackOrderPage({ onAddToCart }: { onAddToCart: (item: CartItem) => void }) {
   const { t, isArabic } = useLanguage();
   const { packId = "" } = useParams();
-  const location = useLocation();
   const [catalog, setCatalog] = useState<Perfume[]>([]);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [message, setMessage] = useState("");
-  const [selectedPerfumes, setSelectedPerfumes] = useState<(Perfume | null)[]>([]);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [currentSlotIndex, setCurrentSlotIndex] = useState(0);
   const [orderForm, setOrderForm] = useState({
     customer_name: "",
     customer_address: "",
@@ -1144,30 +1156,6 @@ function PackOrderPage({ onAddToCart }: { onAddToCart: (item: CartItem) => void 
 
   const pack = useMemo(() => packShowcaseItems.find((item) => item.id === packId) ?? null, [packId]);
 
-  const selectionCount = pack?.selectionCount ?? 4;
-
-  const preselectedPerfume = useMemo(() => {
-    const state = location.state as { preselectedPerfume?: Perfume } | null;
-    return state?.preselectedPerfume ?? null;
-  }, [location.state]);
-
-  useEffect(() => {
-  const slots = new Array(selectionCount).fill(null);
-  if (preselectedPerfume) {
-    slots[0] = preselectedPerfume;
-  }
-  setSelectedPerfumes(slots);
-  window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
-
-  if (preselectedPerfume && selectionCount > 1) {
-    setCurrentSlotIndex(1);
-    setModalOpen(true);
-  } else if (!preselectedPerfume) {
-    setCurrentSlotIndex(0);
-    setModalOpen(true);
-  }
-}, [selectionCount, preselectedPerfume]);
-
   useEffect(() => {
     void api.get<Perfume[]>("/perfumes")
       .then((response) => setCatalog(response.data))
@@ -1175,64 +1163,19 @@ function PackOrderPage({ onAddToCart }: { onAddToCart: (item: CartItem) => void 
       .finally(() => setLoading(false));
   }, []);
 
-  const filledSlugSet = useMemo(() => {
-    return new Set(selectedPerfumes.filter((p): p is Perfume => p !== null).map((p) => p.slug));
-  }, [selectedPerfumes]);
-
-  const filledCount = selectedPerfumes.filter((p) => p !== null).length;
-  const isComplete = filledCount === selectionCount;
-
-  const handleChoosePerfume = (slotIndex: number) => {
-    setCurrentSlotIndex(slotIndex);
-    setModalOpen(true);
-  };
-
-  const handleSelectPerfume = (perfume: Perfume) => {
-  setSelectedPerfumes((prev) => {
-    const next = [...prev];
-    next[currentSlotIndex] = perfume;
-
-    const nextEmptyIndex = next.findIndex((p, i) => i > currentSlotIndex && p === null);
-    if (nextEmptyIndex !== -1) {
-      setTimeout(() => {
-        setCurrentSlotIndex(nextEmptyIndex);
-        setModalOpen(true);
-      }, 300);
-    }
-
-    return next;
-    });
-  };
-
-  const handleRemovePerfume = (slotIndex: number) => {
-    setSelectedPerfumes((prev) => {
-      const next = [...prev];
-      next[slotIndex] = null;
-      return next;
-    });
-  };
-
-  const progressPercent = (filledCount / selectionCount) * 100;
-
-  const progressLabel = useMemo(() => {
-    if (filledCount === 0) {
-      return t(
-        `Choose ${selectionCount} perfumes`,
-        `اختر ${selectionCount} عطور`,
-      );
-    }
-    if (filledCount >= selectionCount) {
-      return t("Your pack is complete!", "الباك الخاص بك مكتمل!");
-    }
-    const remaining = selectionCount - filledCount;
-    if (remaining === 1) {
-      return t("1 remaining", "متبقي 1");
-    }
-    return t(
-      `${remaining} remaining`,
-      `متبقي ${remaining}`,
-    );
-  }, [filledCount, selectionCount, t]);
+  const selectedPerfumes = useMemo(
+    () => pack?.perfumeSlugs
+      .map((slug) => catalog.find((perfume) => perfume.slug === slug))
+      .filter((perfume): perfume is Perfume => perfume !== undefined) ?? [],
+    [catalog, pack],
+  );
+  const selectionCount = 3;
+  const filledCount = selectedPerfumes.length;
+  const isComplete = selectedPerfumes.length === 3;
+  const progressPercent = isComplete ? 100 : 0;
+  const progressLabel = t("Selection fixe de trois parfums", "تشكيلة ثابتة من ثلاثة عطور");
+  const handleRemovePerfume = (_slotIndex?: number) => undefined;
+  const handleChoosePerfume = (_slotIndex?: number) => undefined;
 
   const unitPrice = pack?.price ?? 0;
   const total = unitPrice * quantity;
@@ -1275,16 +1218,6 @@ function PackOrderPage({ onAddToCart }: { onAddToCart: (item: CartItem) => void 
 
   return (
     <div className="min-h-screen bg-[linear-gradient(135deg,_#fef7ed_0%,_#fffaf0_40%,_#f5f5f4_100%)] px-4 pb-16 pt-10 dark:bg-[linear-gradient(135deg,_#0f172a_0%,_#111827_42%,_#1f2937_100%)] sm:px-6">
-      <PerfumeSelectorModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        catalog={catalog}
-        selectedSlugs={Array.from(filledSlugSet)}
-        onSelect={handleSelectPerfume}
-        currentSlotIndex={currentSlotIndex}
-        selectionCount={selectionCount}
-      />
-
       <div className="mx-auto grid max-w-6xl gap-5 lg:grid-cols-[1.1fr_0.9fr]">
         <section className="space-y-4 rounded-3xl border border-stone-200 bg-white p-4 shadow-xl dark:border-stone-700 dark:bg-stone-900 sm:p-6">
           <Link to="/parfumes" className="text-sm text-amber-700 hover:underline dark:text-amber-300">{t("Retour au catalogue", "العودة إلى الكتالوج")}</Link>
@@ -1345,6 +1278,7 @@ function PackOrderPage({ onAddToCart }: { onAddToCart: (item: CartItem) => void 
                       </div>
                       <button
                         type="button"
+                        disabled
                         onClick={() => handleRemovePerfume(idx)}
                         className="flex-shrink-0 rounded-full border border-rose-300 px-2 py-0.5 text-[10px] font-semibold text-rose-700 hover:bg-rose-50 dark:border-rose-500 dark:text-rose-300 dark:hover:bg-rose-950/30"
                       >
@@ -1354,6 +1288,7 @@ function PackOrderPage({ onAddToCart }: { onAddToCart: (item: CartItem) => void 
                   ) : (
                     <button
                       type="button"
+                      disabled
                       onClick={() => handleChoosePerfume(idx)}
                       className="w-full rounded-lg border border-stone-300 py-2 text-xs font-semibold text-stone-600 transition hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800 dark:border-stone-600 dark:text-stone-300 dark:hover:border-amber-600 dark:hover:bg-amber-950/30 dark:hover:text-amber-200"
                     >
@@ -1664,6 +1599,8 @@ function PerfumeOrderPage({ onAddToCart }: { onAddToCart: (item: CartItem) => vo
   const [wishlist, setWishlist] = useState(false);
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
   const [isPurchaseSectionVisible, setIsPurchaseSectionVisible] = useState(false);
+  const [customPackPerfumes, setCustomPackPerfumes] = useState<Perfume[]>([]);
+  const [customPackModalOpen, setCustomPackModalOpen] = useState(false);
   const purchaseSectionRef = useRef<HTMLElement | null>(null);
   const nameInputRef = useRef<HTMLInputElement | null>(null);
   const [form, setForm] = useState<GuestOrderForm>({
@@ -1737,10 +1674,9 @@ function PerfumeOrderPage({ onAddToCart }: { onAddToCart: (item: CartItem) => vo
     }
 
     const stock = perfume.stock ?? {};
-    const available30 = (stock['30ml'] ?? 0) > 0;
     const available50 = (stock['50ml'] ?? 0) > 0;
 
-    return !available30 && !available50;
+    return !available50;
   }, [perfume]);
 
   const preselectedPurchaseOption = useMemo(() => {
@@ -1761,6 +1697,12 @@ function PerfumeOrderPage({ onAddToCart }: { onAddToCart: (item: CartItem) => vo
     setForm((current) => ({ ...current, purchase_option: preselectedPurchaseOption ?? "single_50ml" }));
   }, [productMeta, preselectedPurchaseOption]);
 
+  useEffect(() => {
+    if (perfume) {
+      setCustomPackPerfumes([perfume]);
+    }
+  }, [perfume]);
+
   const mediaItems = useMemo(() => {
     if (!perfume) {
       return [];
@@ -1769,9 +1711,9 @@ function PerfumeOrderPage({ onAddToCart }: { onAddToCart: (item: CartItem) => vo
     const fallbackImage = resolvePerfumeImage(perfume);
 
     return [
-      { label: "Flacon", image: perfume.bottle_images[0] ?? fallbackImage, tone: "from-amber-200 to-amber-50" },
-      { label: "Emballage", image: perfume.packaging_images[0] ?? fallbackImage, tone: "from-rose-200 to-rose-50" },
-      { label: "Style de vie", image: perfume.lifestyle_images[0] ?? fallbackImage, tone: "from-stone-300 to-stone-100" },
+      { image: perfume.bottle_images[0] ?? fallbackImage, tone: "from-amber-200 to-amber-50" },
+      { image: perfume.packaging_images[0] ?? fallbackImage, tone: "from-rose-200 to-rose-50" },
+      { image: perfume.lifestyle_images[0] ?? fallbackImage, tone: "from-stone-300 to-stone-100" },
     ];
   }, [perfume]);
 
@@ -1794,12 +1736,8 @@ function PerfumeOrderPage({ onAddToCart }: { onAddToCart: (item: CartItem) => vo
     }
 
     const prices: Record<PurchaseOption, number> = {
-      pack_30ml_x4: 149,
-      single_30ml: 49,
       single_50ml: 79,
-      pack_50ml_x3: 179,
-      same_30ml_x4: 149,
-      same_50ml_x3: 179,
+      pack_50ml_x3: 199,
     };
 
     return prices[form.purchase_option];
@@ -1807,27 +1745,32 @@ function PerfumeOrderPage({ onAddToCart }: { onAddToCart: (item: CartItem) => vo
 
   const total = useMemo(() => unitPrice * form.quantity, [unitPrice, form.quantity]);
 
-  const packIdFromOption = useMemo(() => {
-    if (form.purchase_option === "pack_30ml_x4") {
-      return "pack-30ml-quad";
-    }
-    if (form.purchase_option === "pack_50ml_x3") {
-      return "pack-50ml-trio";
-    }
-    return null;
-    // same_30ml_x4 and same_50ml_x3 stay on this page — no redirect
-  }, [form.purchase_option]);
+  const isCustomPackComplete = customPackPerfumes.length === 3;
+  const customPackSelectedSlugs = customPackPerfumes.map((item) => item.slug);
 
   const handleAddToCart = () => {
     if (!perfume) {
       return;
     }
 
-    // If a pack option is selected, redirect to the pack page
-    if (packIdFromOption) {
-      navigate(`/pack/${packIdFromOption}`, {
-        state: { preselectedPerfume: perfume },
+    if (form.purchase_option === "pack_50ml_x3") {
+      if (!isCustomPackComplete) {
+        setCustomPackModalOpen(true);
+        return;
+      }
+
+      onAddToCart({
+        key: `custom-pack-${customPackPerfumes.map((item) => item.id).join("-")}`,
+        perfumeId: perfume.id,
+        perfumeName: t("Pack 50ml personnalise", "باك 50مل مخصص"),
+        perfumeSlug: perfume.slug,
+        imageUrl: resolvePerfumeImage(perfume),
+        purchaseOption: form.purchase_option,
+        quantity: form.quantity,
+        unitPrice,
+        selectedPerfumes: customPackPerfumes.map((item) => ({ perfume: item })),
       });
+      setMessage(t("Pack ajoute au panier.", "تمت إضافة الباك إلى السلة."));
       return;
     }
 
@@ -1853,10 +1796,8 @@ function PerfumeOrderPage({ onAddToCart }: { onAddToCart: (item: CartItem) => vo
   };
 
   const handleBuyNow = () => {
-    if (packIdFromOption) {
-      navigate(`/pack/${packIdFromOption}`, {
-        state: { preselectedPerfume: perfume },
-      });
+    if (form.purchase_option === "pack_50ml_x3" && !isCustomPackComplete) {
+      setCustomPackModalOpen(true);
       return;
     }
     purchaseSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1888,6 +1829,10 @@ function PerfumeOrderPage({ onAddToCart }: { onAddToCart: (item: CartItem) => vo
     if (!perfume) {
       return;
     }
+    if (form.purchase_option === "pack_50ml_x3" && !isCustomPackComplete) {
+      setCustomPackModalOpen(true);
+      return;
+    }
 
     const phoneError = validatePhone(form.customer_phone);
     if (phoneError) {
@@ -1900,18 +1845,16 @@ function PerfumeOrderPage({ onAddToCart }: { onAddToCart: (item: CartItem) => vo
     setMessage("");
 
     try {
-      const effectiveQuantity =
-        form.purchase_option === "same_30ml_x4" ? form.quantity * 4 :
-        form.purchase_option === "same_50ml_x3" ? form.quantity * 3 :
-        form.quantity;
-
       const response = await api.post<OrderResponse>("/orders", {
         perfume_id: perfume.id,
         customer_name: form.customer_name,
         customer_address: form.customer_address,
         customer_phone: form.customer_phone,
-        quantity: effectiveQuantity,
+        quantity: form.quantity,
         purchase_option: form.purchase_option,
+        selected_perfume_ids: form.purchase_option === "pack_50ml_x3"
+          ? customPackPerfumes.map((item) => item.id)
+          : undefined,
       });
 
       navigate("/", {
@@ -1997,19 +1940,18 @@ function PerfumeOrderPage({ onAddToCart }: { onAddToCart: (item: CartItem) => vo
               <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-3">
                 {mediaItems.map((media, index) => (
                   <button
-                    key={media.label}
+                    key={index}
                     type="button"
                     onClick={() => setActiveMediaIndex(index)}
                     className={`overflow-hidden rounded-xl border text-left ${activeMediaIndex === index ? "border-stone-900 dark:border-stone-200" : "border-stone-200 dark:border-stone-700"}`}
                   >
                     <div className={`flex aspect-[4/3] items-center justify-center bg-gradient-to-br ${media.tone}`}>
                       {media.image ? (
-                        <img src={media.image} alt={media.label} className="h-full w-full object-cover" />
+                        <img src={media.image} alt={perfume.name} className="h-full w-full object-cover" />
                       ) : (
-                        <span className="text-xs font-semibold text-stone-700">{media.label}</span>
+                        <span className="text-xs font-semibold text-stone-700">Pas d'image</span>
                       )}
                     </div>
-                    <p className="px-3 py-2 text-xs font-medium text-stone-700 dark:text-stone-200">{media.label}</p>
                   </button>
                 ))}
               </div>
@@ -2110,8 +2052,7 @@ function PerfumeOrderPage({ onAddToCart }: { onAddToCart: (item: CartItem) => vo
               <p className="text-sm font-medium text-stone-700 dark:text-stone-200">{t("Choisir une option", "اختر العرض")}</p>
               <div className="flex flex-wrap gap-2">
                 {(Object.keys(purchaseOptionLabels) as PurchaseOption[]).map((option) => {
-                  const isPack = option === "pack_30ml_x4" || option === "pack_50ml_x3";
-                  const packId = option === "pack_30ml_x4" ? "pack-30ml-quad" : option === "pack_50ml_x3" ? "pack-50ml-trio" : null;
+                  const isPack = option === "pack_50ml_x3";
                   const disabled = isOutOfStock;
                   return (
                     <button
@@ -2119,13 +2060,11 @@ function PerfumeOrderPage({ onAddToCart }: { onAddToCart: (item: CartItem) => vo
                       type="button"
                       disabled={disabled}
                       onClick={() => {
-                        if (isPack && perfume) {
-                          navigate(`/pack/${packId}`, {
-                            state: { preselectedPerfume: perfume },
-                          });
-                          return;
-                        }
                         setForm((current) => ({ ...current, purchase_option: option }));
+                        if (isPack && perfume) {
+                          setCustomPackPerfumes((current) => current.length > 0 ? current : [perfume]);
+                          setCustomPackModalOpen(true);
+                        }
                       }}
                       className={`rounded-full px-3 py-2 text-sm font-medium sm:px-4 ${disabled ? 'opacity-50' : form.purchase_option === option ? "bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900" : "border border-stone-300 text-stone-700 dark:border-stone-600 dark:text-stone-200"}`}
                     >
@@ -2135,6 +2074,43 @@ function PerfumeOrderPage({ onAddToCart }: { onAddToCart: (item: CartItem) => vo
                 })}
               </div>
             </div>
+
+            {form.purchase_option === "pack_50ml_x3" && (
+              <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50/60 p-4 dark:border-amber-700 dark:bg-amber-950/20">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-stone-800 dark:text-stone-100">
+                    {t("Choisissez 3 parfums differents", "اختر 3 عطور مختلفة")}
+                  </p>
+                  <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">
+                    {customPackPerfumes.length}/3
+                  </span>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {customPackPerfumes.map((item, index) => (
+                    <span key={item.id} className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 text-xs font-medium text-stone-700 dark:bg-stone-800 dark:text-stone-200">
+                      {item.name}
+                      {index > 0 && (
+                        <button
+                          type="button"
+                          aria-label={t(`Retirer ${item.name}`, `إزالة ${item.name}`)}
+                          onClick={() => setCustomPackPerfumes((current) => current.filter((selected) => selected.id !== item.id))}
+                          className="font-bold text-rose-600"
+                        >
+                          x
+                        </button>
+                      )}
+                    </span>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCustomPackModalOpen(true)}
+                  className="mt-3 rounded-xl border border-amber-400 px-3 py-2 text-xs font-semibold text-amber-900 hover:bg-amber-100 dark:border-amber-600 dark:text-amber-200 dark:hover:bg-amber-950/40"
+                >
+                  {t("Choisir les parfums", "اختيار العطور")}
+                </button>
+              </div>
+            )}
 
             <Legend />
 
@@ -2210,7 +2186,7 @@ function PerfumeOrderPage({ onAddToCart }: { onAddToCart: (item: CartItem) => vo
 
               <button
                 type="submit"
-                disabled={submitting}
+                disabled={submitting || (form.purchase_option === "pack_50ml_x3" && !isCustomPackComplete)}
                 className="w-full rounded-xl bg-emerald-700 p-3 font-medium text-white disabled:opacity-70"
               >
                 {submitting ? t("Validation de la commande...", "جارٍ تنفيذ الطلب...") : t("Confirmer la commande", "تأكيد الطلب")}
@@ -2241,6 +2217,31 @@ function PerfumeOrderPage({ onAddToCart }: { onAddToCart: (item: CartItem) => vo
           {t("Commander ce parfum", "اطلب هذا العطر")}
         </button>
       )}
+
+      <PerfumeSelectorModal
+        open={customPackModalOpen}
+        onClose={() => setCustomPackModalOpen(false)}
+        catalog={catalog}
+        selectedSlugs={customPackSelectedSlugs}
+        currentSlotIndex={Math.min(customPackPerfumes.length, 2)}
+        selectionCount={3}
+        onSelect={(selectedPerfume) => {
+          if (customPackPerfumes.length >= 3 || customPackSelectedSlugs.includes(selectedPerfume.slug)) {
+            return;
+          }
+          setCustomPackPerfumes((current) => {
+            const next = [...current, selectedPerfume];
+            if (next.length === 3) {
+              setCustomPackModalOpen(false);
+              setTimeout(() => {
+                purchaseSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                nameInputRef.current?.focus();
+              }, 150);
+            }
+            return next;
+          });
+        }}
+      />
     </div>
   );
 }
@@ -2314,12 +2315,60 @@ function Legend() {
       <p className="font-semibold">{t("Legende:", "الوسيلة:" )}</p>
       <ul className="mt-1 list-inside list-disc space-y-0.5">
         <li>{t("50ml: 1 bouteille de 50ml", "50 مل: زجاجة واحدة 50 مل")}</li>
-        <li>{t("Pack 30ml x4 choix libre: 4 parfums differents au choix (149 DH)", "باك 30مل × 4 اختيار حر: 4 عطور مختلفة حسب اختيارك (149 درهم)")}</li>
-        <li>{t("Pack 50ml x3 choix libre: 3 parfums differents au choix (179 DH)", "باك 50مل × 3 اختيار حر: 3 عطور مختلفة حسب اختيارك (179 درهم)")}</li>
-        <li>{t("Pack 30ml x4 meme parfum: 4 bouteilles du meme parfum (149 DH)", "باك 30مل × 4 نفس العطر: 4 زجاجات من نفس العطر (149 درهم)")}</li>
-        <li>{t("Pack 50ml x3 meme parfum: 3 bouteilles du meme parfum (179 DH)", "باك 50مل × 3 نفس العطر: 3 زجاجات من نفس العطر (179 درهم)")}</li>
+        <li>{t("Parfum 50ml: 79 DH", "عطر 50مل: 79 درهم")}</li>
+        <li>{t("Pack 50ml x3: 3 parfums differents (199 DH)", "باك 50مل × 3: 3 عطور مختلفة (199 درهم)")}</li>
       </ul>
     </div>
+  );
+}
+
+function OrderPagination({
+  page,
+  pageCount,
+  onPageChange,
+}: {
+  page: number;
+  pageCount: number;
+  onPageChange: (page: number) => void;
+}) {
+  if (pageCount <= 1) {
+    return null;
+  }
+
+  return (
+    <nav className="flex flex-wrap items-center justify-center gap-1.5" aria-label="Pagination des commandes">
+      <button
+        type="button"
+        disabled={page === 1}
+        onClick={() => onPageChange(page - 1)}
+        className="rounded-lg border border-stone-300 px-3 py-1.5 text-xs font-semibold text-stone-700 hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-stone-600 dark:text-stone-200 dark:hover:bg-stone-800"
+      >
+        Precedent
+      </button>
+      {Array.from({ length: pageCount }, (_, index) => index + 1).map((pageNumber) => (
+        <button
+          key={pageNumber}
+          type="button"
+          onClick={() => onPageChange(pageNumber)}
+          aria-current={pageNumber === page ? "page" : undefined}
+          className={`h-8 min-w-8 rounded-lg px-2 text-xs font-semibold ${
+            pageNumber === page
+              ? "bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900"
+              : "border border-stone-300 text-stone-700 hover:bg-stone-100 dark:border-stone-600 dark:text-stone-200 dark:hover:bg-stone-800"
+          }`}
+        >
+          {pageNumber}
+        </button>
+      ))}
+      <button
+        type="button"
+        disabled={page === pageCount}
+        onClick={() => onPageChange(page + 1)}
+        className="rounded-lg border border-stone-300 px-3 py-1.5 text-xs font-semibold text-stone-700 hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-stone-600 dark:text-stone-200 dark:hover:bg-stone-800"
+      >
+        Suivant
+      </button>
+    </nav>
   );
 }
 
@@ -2329,8 +2378,11 @@ function AdminDashboard({ user, onLogout }: { user: User; onLogout: () => Promis
   const [loading, setLoading] = useState(true);
   const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null);
   const [updatingOrderId, setUpdatingOrderId] = useState<number | null>(null);
+  const [validatedPage, setValidatedPage] = useState(1);
+  const [refusedPage, setRefusedPage] = useState(1);
   const [message, setMessage] = useState("");
   const [perfumeMessage, setPerfumeMessage] = useState("");
+  const ordersPerPage = 8;
 
   const fetchOrders = async (showLoading = false) => {
     if (showLoading) {
@@ -2375,14 +2427,33 @@ function AdminDashboard({ user, onLogout }: { user: User; onLogout: () => Promis
     void fetchPerfumes();
   }, []);
 
-  const pendingOrders = orders.filter((order) => order.status !== "validated");
+  const pendingOrders = orders.filter((order) => order.status !== "validated" && order.status !== "refused");
   const validatedOrders = orders.filter((order) => order.status === "validated");
+  const refusedOrders = orders.filter((order) => order.status === "refused");
+  const validatedPageCount = Math.max(1, Math.ceil(validatedOrders.length / ordersPerPage));
+  const refusedPageCount = Math.max(1, Math.ceil(refusedOrders.length / ordersPerPage));
+  const visibleValidatedOrders = validatedOrders.slice(
+    (validatedPage - 1) * ordersPerPage,
+    validatedPage * ordersPerPage,
+  );
+  const visibleRefusedOrders = refusedOrders.slice(
+    (refusedPage - 1) * ordersPerPage,
+    refusedPage * ordersPerPage,
+  );
   const totalRevenue = validatedOrders.reduce((sum, order) => sum + order.total_price, 0);
   const averageOrderValue = orders.length === 0 ? 0 : orders.reduce((sum, order) => sum + order.total_price, 0) / orders.length;
   const validationRate = orders.length === 0 ? 0 : (validatedOrders.length / orders.length) * 100;
   const today = new Date().toDateString();
   const ordersToday = orders.filter((order) => order.created_at && new Date(order.created_at).toDateString() === today).length;
   const latestOrders = orders.slice(0, 5);
+
+  useEffect(() => {
+    setValidatedPage((current) => Math.min(current, validatedPageCount));
+  }, [validatedPageCount]);
+
+  useEffect(() => {
+    setRefusedPage((current) => Math.min(current, refusedPageCount));
+  }, [refusedPageCount]);
 
   const formatOrderDate = (createdAt?: string | null) => {
     if (!createdAt) {
@@ -2402,6 +2473,21 @@ function AdminDashboard({ user, onLogout }: { user: User; onLogout: () => Promis
       setMessage(response.data.message);
     } catch {
       setMessage("Echec de validation de la commande.");
+    } finally {
+      setUpdatingOrderId(null);
+    }
+  };
+
+  const markAsRefused = async (orderId: number) => {
+    setUpdatingOrderId(orderId);
+    setMessage("");
+
+    try {
+      const response = await api.patch<{ message: string; order: AdminOrder }>(`/admin/orders/${orderId}/refuse`);
+      setOrders((current) => current.map((order) => (order.id === orderId ? response.data.order : order)));
+      setMessage(response.data.message);
+    } catch {
+      setMessage("Echec de refus de la commande.");
     } finally {
       setUpdatingOrderId(null);
     }
@@ -2529,6 +2615,13 @@ function AdminDashboard({ user, onLogout }: { user: User; onLogout: () => Promis
                         >
                           {updatingOrderId === order.id ? "Validation..." : "Valider"}
                         </button>
+                        <button
+                          onClick={() => void markAsRefused(order.id)}
+                          disabled={updatingOrderId === order.id}
+                          className="rounded-full bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-800 disabled:opacity-70"
+                        >
+                          {updatingOrderId === order.id ? "Refus..." : "Refuser"}
+                        </button>
                       </div>
                     </div>
 
@@ -2538,6 +2631,7 @@ function AdminDashboard({ user, onLogout }: { user: User; onLogout: () => Promis
                         <p><span className="font-semibold">Adresse:</span> {order.customer_address}</p>
                         <p><span className="font-semibold">Telephone:</span> {order.customer_phone ?? "-"}</p>
                         <p><span className="font-semibold">Offre:</span> {order.purchase_option}</p>
+                        <p><span className="font-semibold">Contenu:</span> {(order.contents ?? [order.perfume]).join(" • ")}</p>
                         <p><span className="font-semibold">Total:</span> <Currency amount={order.total_price} /></p>
                         <p><span className="font-semibold">Cree le:</span> {formatOrderDate(order.created_at)}</p>
                       </div>
@@ -2561,22 +2655,79 @@ function AdminDashboard({ user, onLogout }: { user: User; onLogout: () => Promis
             ) : validatedOrders.length === 0 ? (
               <p className="text-stone-600 dark:text-stone-300">Aucune commande validee.</p>
             ) : (
-              <div className="space-y-3">
-                {validatedOrders.map((order) => (
-                  <article key={order.id} className="rounded-2xl border border-emerald-200 bg-emerald-50/40 p-4">
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                      <div>
-                        <p className="text-sm text-emerald-800">Commande #{order.id} • {formatOrderDate(order.created_at)}</p>
-                        <p className="text-lg font-semibold text-stone-900 dark:text-stone-100">{order.perfume ?? "Parfum"}</p>
-                        <p className="text-sm text-stone-700 dark:text-stone-200">{order.customer_name} • Qte {order.quantity} • {order.purchase_option}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-semibold text-emerald-800">Validee</p>
-                        <p className="text-sm text-stone-700 dark:text-stone-200"><Currency amount={order.total_price} /></p>
-                      </div>
-                    </div>
-                  </article>
-                ))}
+              <div className="space-y-4">
+                <div className="overflow-x-auto rounded-2xl border border-emerald-200">
+                  <table className="w-full min-w-[720px] text-left text-sm">
+                    <thead className="bg-emerald-100/70 text-xs uppercase tracking-wide text-emerald-900">
+                      <tr>
+                        <th className="px-4 py-3">Commande</th>
+                        <th className="px-4 py-3">Client</th>
+                        <th className="px-4 py-3">Parfum</th>
+                        <th className="px-4 py-3">Offre</th>
+                        <th className="px-4 py-3">Total</th>
+                        <th className="px-4 py-3">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-emerald-100 bg-white dark:bg-stone-900">
+                      {visibleValidatedOrders.map((order) => (
+                        <tr key={order.id} className="text-stone-700 dark:text-stone-200">
+                          <td className="px-4 py-3 font-semibold">#{order.id}</td>
+                          <td className="px-4 py-3">{order.customer_name}<br /><span className="text-xs text-stone-500">Qte {order.quantity}</span></td>
+                          <td className="px-4 py-3">{order.perfume ?? "Parfum"}</td>
+                          <td className="px-4 py-3">{order.purchase_option}</td>
+                          <td className="px-4 py-3 font-semibold"><Currency amount={order.total_price} /></td>
+                          <td className="px-4 py-3 text-xs">{formatOrderDate(order.created_at)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <OrderPagination page={validatedPage} pageCount={validatedPageCount} onPageChange={setValidatedPage} />
+              </div>
+            )}
+          </section>
+
+          <section id="refused-orders" className="rounded-3xl border border-stone-200 bg-white p-7 shadow-xl dark:border-stone-700 dark:bg-stone-900">
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <h2 className="text-2xl font-semibold text-stone-900">Commandes refusees</h2>
+              <p className="rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-900">
+                {refusedOrders.length} refusees
+              </p>
+            </div>
+
+            {loading ? (
+              <p className="text-stone-600 dark:text-stone-300">Chargement des commandes...</p>
+            ) : refusedOrders.length === 0 ? (
+              <p className="text-stone-600 dark:text-stone-300">Aucune commande refusee.</p>
+            ) : (
+              <div className="space-y-4">
+                <div className="overflow-x-auto rounded-2xl border border-red-200">
+                  <table className="w-full min-w-[720px] text-left text-sm">
+                    <thead className="bg-red-100/70 text-xs uppercase tracking-wide text-red-900">
+                      <tr>
+                        <th className="px-4 py-3">Commande</th>
+                        <th className="px-4 py-3">Client</th>
+                        <th className="px-4 py-3">Parfum</th>
+                        <th className="px-4 py-3">Offre</th>
+                        <th className="px-4 py-3">Total</th>
+                        <th className="px-4 py-3">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-red-100 bg-white dark:bg-stone-900">
+                      {visibleRefusedOrders.map((order) => (
+                        <tr key={order.id} className="text-stone-700 dark:text-stone-200">
+                          <td className="px-4 py-3 font-semibold">#{order.id}</td>
+                          <td className="px-4 py-3">{order.customer_name}<br /><span className="text-xs text-stone-500">Qte {order.quantity}</span></td>
+                          <td className="px-4 py-3">{order.perfume ?? "Parfum"}</td>
+                          <td className="px-4 py-3">{order.purchase_option}</td>
+                          <td className="px-4 py-3 font-semibold"><Currency amount={order.total_price} /></td>
+                          <td className="px-4 py-3 text-xs">{formatOrderDate(order.created_at)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <OrderPagination page={refusedPage} pageCount={refusedPageCount} onPageChange={setRefusedPage} />
               </div>
             )}
           </section>
@@ -2803,13 +2954,11 @@ function App() {
 function PerfumeManager({ perfumes, onUpdate }: { perfumes: Perfume[]; onUpdate: (message: string) => void }) {
   const { t } = useLanguage();
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [stock30, setStock30] = useState(0);
   const [stock50, setStock50] = useState(0);
   const [saving, setSaving] = useState(false);
 
   const handleEdit = (perfume: Perfume) => {
     const stock = perfume.stock ?? {};
-    setStock30(stock['30ml'] ?? 0);
     setStock50(stock['50ml'] ?? 0);
     setEditingId(perfume.id);
   };
@@ -2818,7 +2967,7 @@ function PerfumeManager({ perfumes, onUpdate }: { perfumes: Perfume[]; onUpdate:
     setSaving(true);
     try {
       await api.patch(`/admin/perfumes/${perfumeId}/stock`, {
-        stock: { '30ml': stock30, '50ml': stock50 },
+        stock: { '50ml': stock50 },
       });
       onUpdate(t("Stock mis a jour.", "تم تحديث المخزون."));
       setEditingId(null);
@@ -2841,7 +2990,6 @@ function PerfumeManager({ perfumes, onUpdate }: { perfumes: Perfume[]; onUpdate:
           <tr className="border-b border-stone-200 dark:border-stone-700">
             <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">Nom</th>
             <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">Marque</th>
-            <th className="px-3 py-2 text-center text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">30ml</th>
             <th className="px-3 py-2 text-center text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">50ml</th>
             <th className="px-3 py-2 text-center text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">Statut</th>
             <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">Action</th>
@@ -2860,19 +3008,6 @@ function PerfumeManager({ perfumes, onUpdate }: { perfumes: Perfume[]; onUpdate:
                     <input
                       type="number"
                       min={0}
-                      value={stock30}
-                      onChange={(e) => setStock30(Number(e.target.value) || 0)}
-                      className="w-16 rounded-lg border border-stone-300 p-1 text-center text-xs dark:border-stone-600 dark:bg-stone-800"
-                    />
-                  ) : (
-                    <span className={stock['30ml'] === 0 ? 'text-rose-600 font-semibold' : ''}>{stock['30ml'] ?? 0}</span>
-                  )}
-                </td>
-                <td className="px-3 py-2 text-center">
-                  {isEditing ? (
-                    <input
-                      type="number"
-                      min={0}
                       value={stock50}
                       onChange={(e) => setStock50(Number(e.target.value) || 0)}
                       className="w-16 rounded-lg border border-stone-300 p-1 text-center text-xs dark:border-stone-600 dark:bg-stone-800"
@@ -2882,8 +3017,8 @@ function PerfumeManager({ perfumes, onUpdate }: { perfumes: Perfume[]; onUpdate:
                   )}
                 </td>
                 <td className="px-3 py-2 text-center">
-                  <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${(stock['30ml'] ?? 0) > 0 || (stock['50ml'] ?? 0) > 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
-                    {(stock['30ml'] ?? 0) > 0 || (stock['50ml'] ?? 0) > 0 ? t('En stock', 'متوفر') : t('Rupture', 'غير متوفر')}
+                  <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${(stock['50ml'] ?? 0) > 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
+                    {(stock['50ml'] ?? 0) > 0 ? t('En stock', 'متوفر') : t('Rupture', 'غير متوفر')}
                   </span>
                 </td>
                 <td className="px-3 py-2 text-right">

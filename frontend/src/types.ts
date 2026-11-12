@@ -68,4 +68,5 @@ export interface AdminOrder {
   total_price: number;
   status: string;
   created_at: string | null;
+  contents?: string[];
 }
