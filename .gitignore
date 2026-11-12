@@ -4,6 +4,7 @@
 # Environment files and local secrets
 **/.env
 **/.env.*
+!**/.env.production
 !**/.env.example
 
 # Common logs
